@@ -1,100 +1,39 @@
 # Bitcoin Universal Recovery & Signing Hub (BURSH)
 
-Offline-first, security-critical platform for Bitcoin wallet recovery, watch-only operation, PSBT flows, and external signing.
+Estado atual: **scaffold arquitetural inicial não validado**.
 
-## Core goals
+Este repositório organiza módulos para recuperação Bitcoin, parsing de PSBT, parsing de invoice Lightning e detecção universal de payload QR. O foco atual é estrutura inicial e testes básicos locais.
 
-- Recover wallets via BIP39 mnemonic + optional passphrase.
-- Support xpub/ypub/zpub watch-only wallets.
-- Create/import/validate/finalize PSBT (BIP174).
-- Parse BOLT11 invoices.
-- Use QR as primary transport.
-- Keep sensitive material in RAM only.
+## Situação por área
 
-## Stack
+- `core-domain`: contratos TypeScript (estrutura inicial).
+- `security-core`: utilitários de redaction e buffer wipe (suporte parcial, não validado em produção).
+- `bitcoin-engine`: parser básico BIP39 e derivação parcial BIP84 (não validado por revisão externa).
+- `psbt-engine`: parser estrutural básico de mapas PSBT (suporte parcial).
+- `qr-engine`: detector universal com inferência de tipos (suporte parcial).
+- `lightning-engine`: parser básico BOLT11 (suporte parcial).
+- `network-adapters`: adaptador HTTP para broadcast (não validado em ambiente real).
+- `apps/web`: interface inicial React (não validado para uso operacional).
+- `apps/android`: estrutura inicial documental.
+- `secure-usb`: não presente neste snapshot.
 
-- Monorepo: `pnpm` + `turborepo`
-- Web app: React + TypeScript + Vite + PWA
-- Android: Capacitor wrapper
-- Secure USB edition: Linux live kiosk skeleton
+## Política de dados sensíveis
 
-## Security model
-
-### Zone 0 - Sensitive (RAM only)
-- Mnemonic
-- Passphrase
-- Seed/private keys
-
-### Zone 1 - Private non-critical
+Permitido persistir:
 - xpub/ypub/zpub
-- non-sensitive settings
+- preferências de UI
 
-### Zone 2 - Network
-- Broadcast adapters
-- future remote indexers
-
-> Rule: Zone 2 must never touch Zone 0 objects directly.
-
-## Repository layout
-
-```text
-apps/
-  web/
-  android/
-packages/
-  core-domain/
-  security-core/
-  bitcoin-engine/
-  psbt-engine/
-  qr-engine/
-  lightning-engine/
-  network-adapters/
-  shared-types/
-  ui/
-infra/
-  usb/
-docs/
-.github/
-```
-
-## Quick start
-
-```bash
-pnpm install
-pnpm dev
-pnpm test
-```
-
-## Main interfaces
-
-- `MnemonicService`
-- `WalletService`
-- `PsbtService`
-- `QRService`
-- `LightningService`
-- `BroadcastService`
-- `ExternalSignerAdapter`
-
-## Persistence policy
-
-Allowed to persist:
-- xpub/ypub/zpub
-- UI preferences
-- application settings
-
-Forbidden to persist:
+Não persistir:
 - mnemonic
 - passphrase
 - seed
-- private keys
+- chaves privadas
 
-## USB Secure Edition
+## Observação crítica de segurança
 
-`infra/usb/` provides baseline scripts and service templates for:
-- live mode boot
-- kiosk fullscreen startup
-- optional encrypted persistent partition for non-sensitive data
+Em JavaScript/TypeScript, limpeza de memória é limitada por:
+- garbage collector não determinístico;
+- strings imutáveis;
+- cópias internas feitas pelo runtime.
 
-## Development roadmap
-
-See `docs/roadmap.md` and `docs/architecture.md`.
+Por isso, `wipe()` em `Uint8Array` reduz exposição, mas **não garante eliminação criptográfica absoluta**.

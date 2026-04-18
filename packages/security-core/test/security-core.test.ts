@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SensitiveMemory, assertNoSensitiveLogging } from '../src/index';
+import { SensitiveMemory, assertNoSensitiveLogging, createSecureLogger } from '../src/index';
 
 describe('security-core', () => {
   it('wipes sensitive buffers', () => {
@@ -11,5 +11,14 @@ describe('security-core', () => {
 
   it('blocks sensitive log tokens', () => {
     expect(() => assertNoSensitiveLogging('seed example')).toThrowError();
+  });
+
+  it('redacta logs sensíveis', () => {
+    const lines: string[] = [];
+    const logger = createSecureLogger((level, line) => lines.push(`${level}:${line}`));
+    logger.warn('mnemonic carregado', { passphrase: 'abc' });
+    expect(lines[0]).not.toContain('mnemonic');
+    expect(lines[0]).not.toContain('passphrase');
+    expect(lines[0]).toContain('[REDACTED]');
   });
 });
