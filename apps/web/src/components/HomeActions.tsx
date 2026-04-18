@@ -1,10 +1,10 @@
 import { ActionCard } from '@bursh/ui';
 
 const ACTIONS = [
-  { title: 'Escanear QR', subtitle: 'Detecta seed/xpub/PSBT/lightning automaticamente.' },
-  { title: 'Abrir carteira', subtitle: 'Importe watch-only por xpub/ypub/zpub.' },
-  { title: 'Criar transação', subtitle: 'Monte PSBT para assinatura externa.' },
-  { title: 'Configurações', subtitle: 'Offline-first, privacidade e preferências.' }
+  { title: 'Escanear QR', subtitle: 'Detector em memória transitória com limpeza manual.' },
+  { title: 'Fluxo watch-only', subtitle: 'Importação por xpub/ypub/zpub (sem seed/passphrase).' },
+  { title: 'Fluxo sensível', subtitle: 'PSBT e seed em RAM-only, sem persistência local.' },
+  { title: 'Configurações', subtitle: 'Privacidade, hardening e políticas de dados.' }
 ];
 
 export function HomeActions() {

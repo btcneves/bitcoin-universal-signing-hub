@@ -10,8 +10,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@bursh/core-domain": "workspace:*",
-    "@bursh/shared-types": "workspace:*",
+    "@bursh/core-domain": "file:../core-domain",
+    "@bursh/shared-types": "file:../shared-types",
     "bitcoinjs-lib": "^6.1.7",
     "@scure/bip32": "^1.6.2",
     "@scure/bip39": "^1.6.0",

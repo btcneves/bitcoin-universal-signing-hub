@@ -32,7 +32,24 @@ textarea {
   padding: 12px;
 }
 
+.actions-row {
+  margin-top: 10px;
+}
+
+button {
+  border: 1px solid #2d3a4f;
+  color: #eef3ff;
+  background: #0d1320;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
 .result {
   color: #8ed1a8;
+  font-weight: 700;
+}
+
+.error {
+  color: #ffa0a0;
   font-weight: 700;
 }

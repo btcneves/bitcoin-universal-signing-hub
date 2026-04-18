@@ -1,12 +1,16 @@
 # Bitcoin Universal Recovery & Signing Hub (BURSH)
 
-Estado atual: **base criptográfica validada para BIP39/BIP84, PSBT e BOLT11, com checks automatizados**.
+Foco atual: **reprodutibilidade, instalabilidade e validação auditável**.
 
-Este repositório organiza módulos para recuperação Bitcoin, parsing de PSBT, parsing de invoice Lightning e detecção universal de payload QR.
+## Versões suportadas
 
-## Setup de ambiente (sem dependência obrigatória de Corepack)
+- Node.js `>=20.19 <23`
+- pnpm `>=10.13.1`
+- npm `>=10.0.0`
 
-### Opção 1 (recomendada): pnpm
+## Instalação e execução
+
+### pnpm (preferencial)
 
 ```bash
 pnpm install
@@ -15,55 +19,39 @@ pnpm lint
 pnpm test
 ```
 
-### Opção 2: npm
+### npm (fallback)
 
 ```bash
-npm install
+npm install --workspaces
 npm run build
 npm run lint
 npm run test
 ```
 
-### Opção 3: yarn
+### bootstrap automatizado npm
 
 ```bash
-yarn install
-yarn build
-yarn lint
-yarn test
+./scripts/bootstrap-npm.sh
 ```
 
-Se seu ambiente falhar com Corepack (erro 403), use instalação direta do gerenciador (sem Corepack) e rode os scripts acima.
+## Estratégias de ambiente reproduzível
 
-## Situação por área
+- Docker para dev/teste: `Dockerfile`
+- Dev Container VS Code: `.devcontainer/devcontainer.json`
+- Bootstrap fallback npm: `scripts/bootstrap-npm.sh`
 
-- `core-domain`: contratos TypeScript.
-- `security-core`: utilitários de redaction e buffer wipe.
-- `bitcoin-engine`: BIP39 com wordlist oficial (2048 palavras), checksum real e derivação BIP84 (`m/84'/0'/0'/0/0`) com endereço SegWit bech32.
-- `psbt-engine`: validação estrutural BIP174 (global/inputs/outputs e consistências críticas).
-- `qr-engine`: detecção universal com validação completa de endereço Bech32/Bech32m e Base58Check.
-- `lightning-engine`: parser BOLT11 com validação de assinatura e integridade.
-- `network-adapters`: adaptador HTTP para broadcast.
-- `apps/web`: interface React.
-- `apps/android`: estrutura documental.
+Detalhes completos: `docs/reproducibility.md`.
 
-## Política de dados sensíveis
+## Segurança de persistência
 
-Permitido persistir:
-- xpub/ypub/zpub
-- preferências de UI
+A política de segurança foi ampliada para bloquear vetores persistentes (storage, IndexedDB, caches e bibliotecas de persistência de estado).
 
-Não persistir:
-- mnemonic
-- passphrase
-- seed
-- chaves privadas
+Detalhes: `docs/persistence-policy.md`.
 
-## Observação crítica de segurança
+## Módulos críticos auditáveis
 
-Em JavaScript/TypeScript, limpeza de memória é limitada por:
-- garbage collector não determinístico;
-- strings imutáveis;
-- cópias internas feitas pelo runtime.
+Auditoria por módulo (BIP39, BIP32/BIP84, validação de endereço, PSBT e BOLT11): `docs/crypto-modules-audit.md`.
 
-Por isso, `wipe()` em `Uint8Array` reduz exposição, mas **não garante eliminação criptográfica absoluta**.
+## Limitações conhecidas
+
+Se `pnpm install`/`npm install` falhar com `403 Forbidden`, o ambiente está bloqueado por policy/proxy de rede e não por erro do código-fonte.

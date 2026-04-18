@@ -10,8 +10,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@bursh/core-domain": "workspace:*",
-    "@bursh/shared-types": "workspace:*",
+    "@bursh/core-domain": "file:../core-domain",
+    "@bursh/shared-types": "file:../shared-types",
     "bolt11": "^1.4.1"
   }
 }

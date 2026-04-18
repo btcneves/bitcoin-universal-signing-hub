@@ -5,5 +5,7 @@
     "outDir": "dist",
     "rootDir": "src"
   },
-  "include": ["src", "test"]
+  "include": [
+    "src"
+  ]
 }
