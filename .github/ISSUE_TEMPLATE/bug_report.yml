@@ -1,0 +1,23 @@
+name: Bug report
+about: Report a functional or security bug
+labels: [bug]
+body:
+  - type: textarea
+    attributes:
+      label: Description
+      description: What happened and expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Reproduction steps
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Security zone impact
+      options:
+        - Zone 0
+        - Zone 1
+        - Zone 2
+        - Unknown

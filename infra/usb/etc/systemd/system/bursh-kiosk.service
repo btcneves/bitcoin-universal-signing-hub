@@ -1,0 +1,12 @@
+[Unit]
+Description=BURSH kiosk mode
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/start-bursh-kiosk.sh
+Restart=always
+User=bursh
+
+[Install]
+WantedBy=multi-user.target
