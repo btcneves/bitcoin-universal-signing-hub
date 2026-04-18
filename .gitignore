@@ -1,0 +1,10 @@
+node_modules
+.pnpm-store
+.turbo
+dist
+build
+coverage
+.DS_Store
+*.log
+apps/web/.vite
+apps/web/android

@@ -1,0 +1,14 @@
+name: Feature request
+about: Propose a roadmap feature
+labels: [enhancement]
+body:
+  - type: input
+    attributes:
+      label: Problem statement
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
