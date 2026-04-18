@@ -1,16 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import { DefaultPsbtService, QrExternalSignerAdapter } from '../src/index';
 
+const minimalPsbt = Buffer.from([
+  0x70, 0x73, 0x62, 0x74, 0xff,
+  0x01, 0x00,
+  0x02, 0x00, 0x00,
+  0x00
+]).toString('base64');
+
 describe('psbt-engine', () => {
-  it('creates and validates psbt payload', () => {
+  it('detecta payload com mágico psbt\\xff e parse estrutural', () => {
     const svc = new DefaultPsbtService();
-    const psbt = svc.createPsbt(['utxo-1'], [{ address: 'bc1qabc', amountSats: 1000 }]);
-    expect(svc.validatePsbt(psbt)).toBe(true);
+    expect(svc.validatePsbt(minimalPsbt)).toBe(true);
+    expect(svc.finalizePsbt(minimalPsbt)).toContain('inputs=0');
   });
 
-  it('encodes psbt for external signer QR flow', () => {
+  it('codifica psbt para fluxo qr', () => {
     const adapter = new QrExternalSignerAdapter();
-    const encoded = adapter.exportPsbtToQr('abc123');
-    expect(adapter.importSignedPsbtFromQr(encoded)).toBe('abc123');
+    const encoded = adapter.exportPsbtToQr(minimalPsbt);
+    expect(adapter.importSignedPsbtFromQr(encoded)).toBe(minimalPsbt);
   });
 });

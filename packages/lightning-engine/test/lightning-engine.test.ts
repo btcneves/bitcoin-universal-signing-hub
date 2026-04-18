@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { Bolt11ParserService } from '../src/index';
 
 describe('lightning parser', () => {
-  it('parses lnbc invoice', () => {
+  it('faz parsing básico de BOLT11 e extrai amount/expiry', () => {
     const parser = new Bolt11ParserService();
-    const parsed = parser.parseBolt11('lnbc10u1testinvoice');
-    expect(parsed.amountSats).toBe(10);
+    const invoice = `lnbc10u1${'q'.repeat(140)}`;
+    const parsed = parser.parseBolt11(invoice);
+    expect(parsed.amountSats).toBe(1000);
+    expect(parsed.expiry).toBe(3600);
   });
 });
