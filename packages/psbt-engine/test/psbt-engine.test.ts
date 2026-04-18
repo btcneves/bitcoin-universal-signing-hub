@@ -1,23 +1,41 @@
 import { describe, expect, it } from 'vitest';
+import { Psbt } from 'bitcoinjs-lib';
 import { DefaultPsbtService, QrExternalSignerAdapter } from '../src/index';
 
-const minimalPsbt = Buffer.from([
-  0x70, 0x73, 0x62, 0x74, 0xff,
-  0x01, 0x00,
-  0x02, 0x00, 0x00,
-  0x00
-]).toString('base64');
+const makeValidPsbt = (): string => {
+  const psbt = new Psbt();
+  psbt.addInput({
+    hash: '11'.repeat(32),
+    index: 0,
+    witnessUtxo: {
+      script: Buffer.from('0014' + '22'.repeat(20), 'hex'),
+      value: 1000
+    }
+  });
+  psbt.addOutput({ script: Buffer.from('0014' + '33'.repeat(20), 'hex'), value: 900 });
+  return psbt.toBase64();
+};
 
 describe('psbt-engine', () => {
-  it('detecta payload com mágico psbt\\xff e parse estrutural', () => {
+  it('valida estrutura completa de uma PSBT', () => {
     const svc = new DefaultPsbtService();
-    expect(svc.validatePsbt(minimalPsbt)).toBe(true);
-    expect(svc.finalizePsbt(minimalPsbt)).toContain('inputs=0');
+    const validPsbt = makeValidPsbt();
+    expect(svc.validatePsbt(validPsbt)).toBe(true);
+    expect(svc.finalizePsbt(validPsbt)).toContain('inputs=1');
+  });
+
+  it('rejeita PSBT inválida sem UTXO por input', () => {
+    const svc = new DefaultPsbtService();
+    const malformed = new Psbt();
+    malformed.addInput({ hash: 'aa'.repeat(32), index: 0 });
+    malformed.addOutput({ script: Buffer.from('0014' + '44'.repeat(20), 'hex'), value: 1000 });
+    expect(svc.validatePsbt(malformed.toBase64())).toBe(false);
   });
 
   it('codifica psbt para fluxo qr', () => {
     const adapter = new QrExternalSignerAdapter();
-    const encoded = adapter.exportPsbtToQr(minimalPsbt);
-    expect(adapter.importSignedPsbtFromQr(encoded)).toBe(minimalPsbt);
+    const psbt = makeValidPsbt();
+    const encoded = adapter.exportPsbtToQr(psbt);
+    expect(adapter.importSignedPsbtFromQr(encoded)).toBe(psbt);
   });
 });

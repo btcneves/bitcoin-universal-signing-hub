@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { address as btcAddress } from 'bitcoinjs-lib';
 import type { QRService } from '@bursh/core-domain';
 import type { ParsedQRPayload } from '@bursh/shared-types';
 
@@ -42,27 +43,43 @@ const parseExtPub = (value: string): { type: 'xpub' | 'ypub' | 'zpub'; network: 
   return table[version];
 };
 
-const validateBase58Address = (value: string): boolean => {
-  const decoded = decodeBase58Check(value);
-  return !!decoded && (decoded[0] === 0x00 || decoded[0] === 0x05 || decoded[0] === 0x6f || decoded[0] === 0xc4);
+const validateBase58Address = (value: string): { ok: boolean; network?: 'mainnet' | 'testnet' } => {
+  try {
+    const decoded = btcAddress.fromBase58Check(value);
+    if ([0x00, 0x05].includes(decoded.version)) return { ok: true, network: 'mainnet' };
+    if ([0x6f, 0xc4].includes(decoded.version)) return { ok: true, network: 'testnet' };
+    return { ok: false };
+  } catch {
+    return { ok: false };
+  }
 };
 
 const validateBech32 = (value: string): { ok: boolean; network?: 'mainnet' | 'testnet' } => {
-  const lower = value.toLowerCase();
-  if (!lower.startsWith('bc1') && !lower.startsWith('tb1')) return { ok: false };
-  const hrp = lower.startsWith('bc1') ? 'mainnet' : 'testnet';
-  const data = lower.slice(3);
-  if (data.length < 10) return { ok: false };
-  const charset = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
-  if ([...data].some((c) => !charset.includes(c))) return { ok: false };
-  return { ok: true, network: hrp };
+  try {
+    const decoded = btcAddress.fromBech32(value);
+    const network = decoded.prefix === 'bc' ? 'mainnet' : decoded.prefix === 'tb' ? 'testnet' : undefined;
+    if (!network) return { ok: false };
+
+    if (decoded.version < 0 || decoded.version > 16) return { ok: false };
+    if (decoded.data.length < 2 || decoded.data.length > 40) return { ok: false };
+    if (decoded.version === 0 && ![20, 32].includes(decoded.data.length)) return { ok: false };
+    if (decoded.version > 0 && decoded.data.length < 2) return { ok: false };
+
+    return { ok: true, network };
+  } catch {
+    return { ok: false };
+  }
 };
 
 const isPsbtPayload = (input: string): boolean => {
   const trimmed = input.trim();
   if (trimmed.startsWith('ur:crypto-psbt/')) return true;
-  const raw = Buffer.from(trimmed, 'base64');
-  return raw.subarray(0, 5).equals(Buffer.from([0x70, 0x73, 0x62, 0x74, 0xff]));
+  try {
+    const raw = Buffer.from(trimmed, 'base64');
+    return raw.subarray(0, 5).equals(Buffer.from([0x70, 0x73, 0x62, 0x74, 0xff]));
+  } catch {
+    return false;
+  }
 };
 
 export class UniversalQrService implements QRService {
@@ -87,11 +104,12 @@ export class UniversalQrService implements QRService {
     }
 
     const bech = validateBech32(trimmed);
-    if (bech.ok || validateBase58Address(trimmed)) {
+    const base58 = validateBase58Address(trimmed);
+    if (bech.ok || base58.ok) {
       return {
         type: 'bitcoin_address',
         raw: trimmed,
-        metadata: { network: bech.network ?? (trimmed.startsWith('m') || trimmed.startsWith('n') ? 'testnet' : 'mainnet') }
+        metadata: { network: bech.network ?? base58.network ?? 'mainnet' }
       };
     }
 
