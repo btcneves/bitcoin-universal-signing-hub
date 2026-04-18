@@ -10,6 +10,6 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@bursh/core-domain": "workspace:*"
+    "@bursh/core-domain": "file:../core-domain"
   }
 }
