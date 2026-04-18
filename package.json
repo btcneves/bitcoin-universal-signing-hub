@@ -3,7 +3,6 @@
   "private": true,
   "version": "0.1.0",
   "description": "Offline-first Bitcoin recovery and signing platform",
-  "packageManager": "pnpm@9.12.2",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",

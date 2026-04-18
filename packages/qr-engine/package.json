@@ -12,6 +12,7 @@
   "dependencies": {
     "@bursh/core-domain": "workspace:*",
     "@bursh/shared-types": "workspace:*",
-    "@bursh/bitcoin-engine": "workspace:*"
+    "@bursh/bitcoin-engine": "workspace:*",
+    "bitcoinjs-lib": "^6.1.7"
   }
 }

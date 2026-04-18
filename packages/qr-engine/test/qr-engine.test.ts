@@ -55,7 +55,7 @@ describe('QR parser', () => {
   });
 
   it('detecta endereço bitcoin e rede', () => {
-    const result = parser.detectPayload('bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kg3g4ty');
+    const result = parser.detectPayload('bc1qcr8te4kr609gcawutmrza0j4xv80jy8zmfp6l0');
     expect(result.type).toBe('bitcoin_address');
     expect(result.metadata?.network).toBe('mainnet');
   });

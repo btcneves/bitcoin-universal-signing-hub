@@ -1,103 +1,93 @@
+import { Psbt } from 'bitcoinjs-lib';
 import type { ExternalSignerAdapter, PsbtService } from '@bursh/core-domain';
 
-const PSBT_MAGIC = Buffer.from([0x70, 0x73, 0x62, 0x74, 0xff]);
-
-const readCompactSize = (buffer: Buffer, offset: number): { value: number; bytes: number } => {
-  const first = buffer[offset];
-  if (first < 0xfd) return { value: first, bytes: 1 };
-  if (first === 0xfd) return { value: buffer.readUInt16LE(offset + 1), bytes: 3 };
-  if (first === 0xfe) return { value: buffer.readUInt32LE(offset + 1), bytes: 5 };
-  throw new Error('CompactSize > 32-bit não suportado na estrutura inicial');
-};
-
-const parseMap = (buffer: Buffer, start: number): { next: number; entries: number } => {
-  let offset = start;
-  let entries = 0;
-
-  while (offset < buffer.length) {
-    const keyLen = readCompactSize(buffer, offset);
-    offset += keyLen.bytes;
-    if (keyLen.value === 0) {
-      return { next: offset, entries };
-    }
-
-    const keyStart = offset;
-    offset += keyLen.value;
-    const valueLen = readCompactSize(buffer, offset);
-    offset += valueLen.bytes + valueLen.value;
-
-    if (offset > buffer.length) {
-      throw new Error('PSBT malformado: field além do payload');
-    }
-
-    const keyType = buffer[keyStart];
-    if (keyType === 0x00 && entries > 0) {
-      throw new Error('PSBT inválido: unsigned tx duplicada no global map');
-    }
-    entries += 1;
-  }
-
-  throw new Error('PSBT malformado: mapa sem terminador');
-};
-
-const decodePsbtBuffer = (input: string): Buffer => {
+const decodePsbt = (input: string): Psbt => {
   const trimmed = input.trim();
-  if (trimmed.startsWith('70736274ff')) {
-    return Buffer.from(trimmed, 'hex');
+  try {
+    if (/^[0-9a-fA-F]+$/.test(trimmed)) {
+      return Psbt.fromHex(trimmed);
+    }
+    return Psbt.fromBase64(trimmed);
+  } catch {
+    throw new Error('PSBT inválida: payload não pôde ser decodificado');
   }
-  const raw = Buffer.from(trimmed, 'base64');
-  if (raw.length === 0 || Buffer.from(raw.toString('base64')).toString('base64') !== raw.toString('base64')) {
-    throw new Error('PSBT inválido: base64 malformado');
+};
+
+const assertStructuralRules = (psbt: Psbt): void => {
+  if (!psbt.data.globalMap.unsignedTx) {
+    throw new Error('PSBT inválida: unsigned tx ausente');
   }
-  return raw;
+
+  const tx = psbt.txInputs;
+  const outputs = psbt.txOutputs;
+  if (tx.length === 0) throw new Error('PSBT inválida: transação sem inputs');
+  if (outputs.length === 0) throw new Error('PSBT inválida: transação sem outputs');
+
+  if (psbt.data.inputs.length !== tx.length) {
+    throw new Error('PSBT inválida: número de input maps inconsistente');
+  }
+
+  if (psbt.data.outputs.length !== outputs.length) {
+    throw new Error('PSBT inválida: número de output maps inconsistente');
+  }
+
+  psbt.data.inputs.forEach((input, index) => {
+    if (!input.witnessUtxo && !input.nonWitnessUtxo) {
+      throw new Error(`PSBT inválida: input ${index} sem UTXO de referência`);
+    }
+    if (input.witnessUtxo && input.nonWitnessUtxo) {
+      throw new Error(`PSBT inválida: input ${index} com witnessUtxo e nonWitnessUtxo ao mesmo tempo`);
+    }
+  });
 };
 
 export class DefaultPsbtService implements PsbtService {
   createPsbt(inputs: string[], outputs: Array<{ address: string; amountSats: number }>): string {
-    const payload = JSON.stringify({ inputs, outputs, version: 0 });
-    return Buffer.concat([PSBT_MAGIC, Buffer.from(payload)]).toString('base64');
+    const psbt = new Psbt();
+
+    for (const input of inputs) {
+      const [txid, voutRaw, amountRaw] = input.split(':');
+      const vout = Number(voutRaw);
+      const amountSats = Number(amountRaw);
+      if (!txid || !Number.isInteger(vout) || vout < 0 || !Number.isInteger(amountSats) || amountSats <= 0) {
+        throw new Error('Input PSBT inválido. Use formato txid:vout:amountSats');
+      }
+
+      psbt.addInput({
+        hash: txid,
+        index: vout,
+        witnessUtxo: {
+          script: Buffer.alloc(0),
+          value: amountSats
+        }
+      });
+    }
+
+    for (const output of outputs) {
+      if (!Number.isInteger(output.amountSats) || output.amountSats <= 0) {
+        throw new Error('Output PSBT inválido: amountSats deve ser inteiro positivo');
+      }
+      psbt.addOutput({ address: output.address, value: output.amountSats });
+    }
+
+    return psbt.toBase64();
   }
 
   validatePsbt(psbtBase64: string): boolean {
     try {
-      const parsed = this.parseStructural(psbtBase64);
-      return parsed.inputMaps >= 0 && parsed.outputMaps >= 0;
+      const psbt = decodePsbt(psbtBase64);
+      assertStructuralRules(psbt);
+      return true;
     } catch {
       return false;
     }
   }
 
   finalizePsbt(psbtBase64: string): string {
-    const parsed = this.parseStructural(psbtBase64);
-    return `finalized:inputs=${parsed.inputMaps};outputs=${parsed.outputMaps}`;
-  }
+    const psbt = decodePsbt(psbtBase64);
+    assertStructuralRules(psbt);
 
-  parseStructural(psbtPayload: string): { inputMaps: number; outputMaps: number; globalEntries: number } {
-    const raw = decodePsbtBuffer(psbtPayload);
-    if (!raw.subarray(0, 5).equals(PSBT_MAGIC)) {
-      throw new Error('PSBT inválido: prefixo mágico ausente');
-    }
-
-    let offset = 5;
-    const global = parseMap(raw, offset);
-    offset = global.next;
-
-    const inputMaps = Math.min(raw.length - offset, 1);
-    let parsedInputMaps = 0;
-    for (let i = 0; i < inputMaps; i++) {
-      const next = parseMap(raw, offset);
-      offset = next.next;
-      parsedInputMaps += 1;
-    }
-
-    let parsedOutputMaps = 0;
-    while (offset < raw.length) {
-      const next = parseMap(raw, offset);
-      offset = next.next;
-      parsedOutputMaps += 1;
-    }
-
-    return { inputMaps: parsedInputMaps, outputMaps: parsedOutputMaps, globalEntries: global.entries };
+    return `finalized:inputs=${psbt.txInputs.length};outputs=${psbt.txOutputs.length}`;
   }
 }
 

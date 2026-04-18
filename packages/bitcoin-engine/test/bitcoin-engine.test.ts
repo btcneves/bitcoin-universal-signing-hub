@@ -7,6 +7,7 @@ describe('BIP39 service', () => {
   it('valida checksum oficial (vetor BIP39)', () => {
     const svc = new Bip39Service();
     expect(svc.validateMnemonic(mnemonic)).toBe(true);
+    expect(svc.validateMnemonic(`${mnemonic} invalid`)).toBe(false);
   });
 
   it('gera seed BIP39 com passphrase (NFKD)', () => {
@@ -20,15 +21,20 @@ describe('BIP39 service', () => {
 });
 
 describe('BIP84 wallet service', () => {
-  it('gera descritor m/84\'/0\'/0\' e endereço bc1 válido', () => {
+  it('deriva conta m/84\'/0\'/0\' e endereço m/84\'/0\'/0\'/0/0 real', () => {
     const wallet = new Bip84WalletService();
-    const seed = new Uint8Array(64).fill(1);
+    const seed = Buffer.from(
+      '5eb00bbddcf069084889a8ab9155568165f5c453ccb85e70811aaed6f6da5fc1'
+      + '9a5ac40b389cd370d086206dec8aa6c43daea6690f20ad3d8d48b2d2ce9e38e4',
+      'hex'
+    );
+
     const descriptor = wallet.deriveBip84Wallet(seed);
-    const address = wallet.deriveAddress(descriptor.accountXpub, 0, 0);
+    const address = wallet.deriveAddress(descriptor.accountZpub, 0, 0);
 
     expect(descriptor.derivationPath).toBe("m/84'/0'/0'");
     expect(descriptor.accountXpub.startsWith('xpub')).toBe(true);
     expect(descriptor.accountZpub.startsWith('zpub')).toBe(true);
-    expect(address.startsWith('bc1')).toBe(true);
+    expect(address).toBe('bc1qcr8te4kr609gcawutmrza0j4xv80jy8zmfp6l0');
   });
 });
