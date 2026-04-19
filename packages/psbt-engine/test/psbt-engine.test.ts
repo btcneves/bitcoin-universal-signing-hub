@@ -21,7 +21,7 @@ describe('psbt-engine', () => {
     const svc = new DefaultPsbtService();
     const validPsbt = makeValidPsbt();
     expect(svc.validatePsbt(validPsbt)).toBe(true);
-    expect(svc.finalizePsbt(validPsbt)).toContain('inputs=1');
+    expect(() => svc.finalizePsbt(validPsbt)).toThrow(/não pôde ser finalizada/i);
   });
 
   it('rejeita PSBT inválida sem UTXO por input', () => {

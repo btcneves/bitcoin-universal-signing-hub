@@ -87,7 +87,12 @@ export class DefaultPsbtService implements PsbtService {
     const psbt = decodePsbt(psbtBase64);
     assertStructuralRules(psbt);
 
-    return `finalized:inputs=${psbt.txInputs.length};outputs=${psbt.txOutputs.length}`;
+    try {
+      psbt.finalizeAllInputs();
+      return psbt.extractTransaction().toHex();
+    } catch {
+      throw new Error('PSBT não pôde ser finalizada: assinaturas/final scripts ausentes ou inválidos');
+    }
   }
 }
 

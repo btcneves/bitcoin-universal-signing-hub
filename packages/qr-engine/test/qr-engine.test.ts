@@ -44,6 +44,15 @@ const recodeVersion = (xpub: string, version: number): string => {
 describe('QR parser', () => {
   const parser = new UniversalQrService();
 
+
+  it('valida mnemonic bip39 com checksum', () => {
+    const validMnemonic = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
+    const invalidMnemonic = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon';
+
+    expect(parser.detectPayload(validMnemonic).type).toBe('bip39');
+    expect(parser.detectPayload(invalidMnemonic).type).toBe('unknown');
+  });
+
   it('detecta xpub/ypub/zpub', () => {
     const wallet = new Bip84WalletService();
     const descriptor = wallet.deriveBip84Wallet(new Uint8Array(64).fill(1));
