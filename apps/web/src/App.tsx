@@ -33,7 +33,7 @@ const formatMetadata = (payload: ParsedQRPayload): string | undefined => {
 
 const getDetectionMaturity = (type?: ParsedQRPayload['type']): string => {
   if (!type || type === 'unknown') {
-    return 'N/A';
+    return 'não aplicável';
   }
 
   if (type === 'lightning_invoice') {
@@ -161,7 +161,7 @@ export function App() {
         {autoClearedSensitiveData ? (
           <p className="sensitive-notice">
             Payload sensível detectado ({detected?.type}). O campo de entrada foi limpo
-            automaticamente e os dados não são persistidos em storage local.
+            automaticamente e a área de teste permanece sem payload visível.
           </p>
         ) : null}
         {errorMessage ? <p className="error">{errorMessage}</p> : null}

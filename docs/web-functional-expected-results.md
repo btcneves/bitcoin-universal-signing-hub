@@ -1,132 +1,49 @@
-# Web app — expected results by flow
+# Web app — expected results by checklist case
 
 Atualizado em: **2026-04-19**.
 
-Este guia complementa a checklist funcional e descreve, por fluxo, o comportamento esperado da UI atual (`apps/web`) durante testes manuais locais.
+Este guia complementa a checklist funcional e descreve o comportamento esperado da UI atual (`apps/web`) com referência direta aos IDs da checklist (`WF-*`).
 
 ## Convenções
 
-- **Deve acontecer**: comportamento esperado para considerar o teste aprovado.
+- **Deve acontecer**: comportamento esperado para considerar o caso aprovado.
 - **Não deve acontecer**: comportamento considerado bug/regressão.
-- **Status atual**: nível de maturidade no estado atual do produto.
+- **Maturidade**: estável / heurístico / experimental (deve bater com checklist e UI).
 
-## Fluxos principais
+## Matriz de resultados esperados
 
-### 1) Input manual de texto (genérico)
+| Caso       | Maturidade   | Deve acontecer                                                                                                               | Não deve acontecer                                     |
+| ---------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| **WF-A01** | Estável      | Home carrega com título, painel de entrada, textarea, botão de limpeza e cards de ação.                                      | Quebra visual crítica ao abrir app.                    |
+| **WF-A02** | Estável      | Sem input: `Estado da entrada: vazia` e `Estado da detecção: aguardando entrada`.                                            | Estado inicial inconsistente ou erro sem interação.    |
+| **WF-A03** | Estável      | Com texto genérico: entrada vira `preenchida`; app continua responsivo; sem crash.                                           | Travamento ou crash ao digitar texto simples.          |
+| **WF-A04** | Estável      | Limpeza manual com conteúdo: apaga input, reseta detecção/erro e mostra feedback `Payload removido da área de teste manual.` | Input visível permanecer após limpar.                  |
+| **WF-A05** | Estável      | Limpeza com campo vazio mostra feedback `Área de teste já estava limpa.`                                                     | Sem feedback de ação ao limpar vazio.                  |
+| **WF-B01** | Estável      | xpub/ypub/zpub válido detectado corretamente; `Classificação da detecção: estável`.                                          | Classificar payload válido como `unknown`.             |
+| **WF-B02** | Estável      | xpub/ypub/zpub inválido detectado como `unknown`.                                                                            | Falso positivo como xpub/ypub/zpub válido.             |
+| **WF-B03** | Estável      | Seed válida detectada como `bip39`; aviso de sensível exibido; campo limpo automaticamente.                                  | Seed permanecer visível após detecção válida.          |
+| **WF-B04** | Estável      | Seed inválida detectada como `unknown`; sem limpeza automática de sensível.                                                  | Classificação incorreta como `bip39`.                  |
+| **WF-B05** | Estável      | PSBT válida detectada como `psbt`; aviso de sensível exibido; campo limpo automaticamente.                                   | PSBT válida ficar visível no campo após detecção.      |
+| **WF-B06** | Estável      | PSBT inválida detectada como `unknown`; sem aviso de sensível.                                                               | Falso positivo como `psbt`.                            |
+| **WF-B07** | Heurístico   | Invoice válida (`lnbc`/`lntb`) detectada como `lightning_invoice`; aviso heurístico visível; classificação `heurístico`.     | Ocultar limitação heurística para Lightning.           |
+| **WF-B08** | Heurístico   | Prefixo inválido (`lnxx` etc.) detectado como `unknown`.                                                                     | Classificar prefixo não suportado como invoice válida. |
+| **WF-B09** | Estável      | Endereço válido detectado como `bitcoin_address`; quando houver, exibir `Rede detectada: mainnet/testnet`.                   | Falso negativo para exemplos válidos comuns.           |
+| **WF-B10** | Estável      | Endereço inválido detectado como `unknown`.                                                                                  | Falso positivo para checksum/prefixo inválido.         |
+| **WF-B11** | Experimental | Conteúdo multi-linha com ruído não trava app; estado mantém coerência (`tipo válido` ou `unknown`).                          | Crash/congelamento por input ruidoso.                  |
+| **WF-C01** | Estável      | Quando há erro de parsing, UI mostra mensagem objetiva com orientação: `Revise formato e conteúdo`.                          | Erro silencioso ou mensagem sem contexto.              |
+| **WF-C02** | Experimental | Com app já carregado, fluxos locais seguem sem backend obrigatório mesmo offline.                                            | Dependência indevida de internet para fluxos locais.   |
 
-- **Deve acontecer**
-  - O campo aceita colagem e edição manual.
-  - O estado da entrada alterna entre `vazia` e `preenchida` conforme texto atual.
-  - O estado de detecção atualiza sem travar a página.
-- **Não deve acontecer**
-  - Crash de runtime ao colar texto aleatório.
-  - Congelamento perceptível para entradas curtas/médias.
-- **Status atual**: **estável para uso manual básico**.
+## Regras transversais obrigatórias
 
-### 2) Seed válida (BIP39)
-
-- **Deve acontecer**
-  - Tipo detectado: `bip39`.
-  - Aviso explícito de limpeza de sensível.
-  - Campo de entrada é limpo automaticamente após detecção.
-- **Não deve acontecer**
-  - Seed permanecer visível após detecção.
-  - Classificação como `unknown` quando seed válida.
-- **Status atual**: **funcional e priorizado para higiene mínima de UI**.
-
-### 3) Seed inválida
-
-- **Deve acontecer**
-  - Tipo detectado: `unknown`.
-  - Campo **não** é limpo automaticamente (não foi detectado como sensível válido).
-- **Não deve acontecer**
-  - Classificação incorreta como `bip39`.
-  - Aviso de limpeza sensível sem detecção de sensível.
-- **Status atual**: **funcional (checagem BIP39 local)**.
-
-### 4) xpub válido (inclui ypub/zpub)
-
-- **Deve acontecer**
-  - Tipo detectado correspondente (`xpub`, `ypub` ou `zpub`).
-  - Estado visual de payload reconhecido.
-- **Não deve acontecer**
-  - Classificação como `unknown` para payload válido.
-- **Status atual**: **funcional para validação de formato/checksum**.
-
-### 5) xpub inválido
-
-- **Deve acontecer**
-  - Tipo detectado: `unknown`.
-- **Não deve acontecer**
-  - Falso positivo como `xpub`/`ypub`/`zpub`.
-- **Status atual**: **funcional (não deve aceitar checksum/version errados)**.
-
-### 6) PSBT válida
-
-- **Deve acontecer**
-  - Tipo detectado: `psbt`.
-  - Aviso de limpeza sensível exibido.
-  - Campo limpo automaticamente.
-- **Não deve acontecer**
-  - PSBT ficar persistida no textarea após detecção.
-- **Status atual**: **funcional para assinatura de tipo por magic bytes**.
-
-### 7) PSBT inválida
-
-- **Deve acontecer**
-  - Tipo detectado: `unknown`.
-  - Sem aviso de limpeza sensível.
-- **Não deve acontecer**
-  - Falso positivo como `psbt`.
-- **Status atual**: **funcional para casos inválidos comuns**.
-
-### 8) Lightning invoice válida
-
-- **Deve acontecer**
-  - Tipo detectado: `lightning_invoice`.
-  - Mensagem de limitação heurística aparece para alertar teste parcial.
-- **Não deve acontecer**
-  - Classificação incorreta como `unknown` quando prefixo válido e formato básico preservado.
-- **Status atual**: **parcial/heurístico** (detecção por prefixo).
-
-### 9) Lightning invoice inválida
-
-- **Deve acontecer**
-  - Tipo detectado: `unknown` para prefixo inválido.
-- **Não deve acontecer**
-  - Classificação como invoice com prefixos não suportados.
-- **Status atual**: **parcial/heurístico** (texto truncado com prefixo válido ainda pode passar).
-
-### 10) Bitcoin address válida
-
-- **Deve acontecer**
-  - Tipo detectado: `bitcoin_address`.
-  - Quando disponível, exibir rede detectada (`mainnet`/`testnet`).
-- **Não deve acontecer**
-  - Falso negativo para exemplos válidos Bech32/Base58 comuns.
-- **Status atual**: **funcional para validação de formato/checksum suportado**.
-
-### 11) Bitcoin address inválida
-
-- **Deve acontecer**
-  - Tipo detectado: `unknown`.
-- **Não deve acontecer**
-  - Falso positivo para checksum inválido ou caracteres fora do alfabeto.
-- **Status atual**: **funcional para invalidações básicas**.
-
-### 12) Limpeza de sensíveis
-
-- **Deve acontecer**
-  - Apenas tipos sensíveis (`bip39`, `psbt`) limpam input automaticamente.
-  - Mensagem deixa explícito que houve limpeza automática e que não há persistência local pelo app.
-  - Botão de limpeza manual remove input + estado de detecção/erro.
-- **Não deve acontecer**
-  - Limpeza automática em payload não sensível.
-  - Persistência acidental em LocalStorage/SessionStorage pelo app.
-- **Status atual**: **funcional para UX mínima de segurança em teste manual**.
+1. **Tipos sensíveis com limpeza automática**: somente `bip39` e `psbt`.
+2. **Sem persistência local de sensíveis**: sem gravação em LocalStorage/SessionStorage pelo app.
+3. **Classificação de maturidade na UI**:
+   - `estável` para tipos consolidados
+   - `heurístico` para `lightning_invoice`
+   - `não aplicável` para `unknown`
 
 ## Resumo de maturidade atual
 
-- **Estável para validação manual agora**: input manual, seed, xpub, PSBT, endereço Bitcoin, limpeza de sensíveis.
-- **Parcial/experimental**: validação semântica completa de Lightning invoice (detecção atual é heurística).
-- **Fora do escopo desta rodada**: fluxo watch-only completo, assinatura externa real, integração QR avançada ponta-a-ponta.
+- **Estável para rodada manual atual**: Fluxos A, B (exceto Lightning heurístico), C01.
+- **Heurístico/experimental**: WF-B07, WF-B08, WF-B11, WF-C02.
+- **Fora do escopo desta rodada**: watch-only completo, assinatura externa real, QR avançado ponta-a-ponta.

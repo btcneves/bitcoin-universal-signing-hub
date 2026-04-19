@@ -11,6 +11,14 @@ body:
     validations:
       required: true
 
+  - type: input
+    attributes:
+      label: Link do test report
+      description: Link para o relatório da rodada (arquivo, comentário ou artefato)
+      placeholder: https://...
+    validations:
+      required: true
+
   - type: textarea
     attributes:
       label: Ambiente de teste
@@ -31,6 +39,16 @@ body:
         - Estável
         - Heurístico
         - Experimental
+    validations:
+      required: true
+
+  - type: dropdown
+    attributes:
+      label: Prioridade sugerida
+      options:
+        - P0
+        - P1
+        - P2
     validations:
       required: true
 
@@ -74,6 +92,15 @@ body:
 
   - type: dropdown
     attributes:
+      label: Reprodutibilidade
+      options:
+        - Sempre
+        - Intermitente
+    validations:
+      required: true
+
+  - type: dropdown
+    attributes:
       label: Impacto de zona de segurança
       options:
         - Zone 0
@@ -86,3 +113,5 @@ body:
       label: Evidências
       description: Anexe print, log de console e/ou link do relatório de teste
       placeholder: Links, imagens, logs
+    validations:
+      required: true
