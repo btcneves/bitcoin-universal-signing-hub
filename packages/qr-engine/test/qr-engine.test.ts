@@ -115,4 +115,10 @@ describe('QR parser', () => {
     const truncatedPsbt = 'cHNidP8BAHECAAAAAQAAAAAAAAAAAAAAAAAAAA';
     expect(parser.detectPayload(truncatedPsbt).type).toBe('unknown');
   });
+
+  it('aceita payload de psbt mínima compatível validada em QA manual', () => {
+    const qaPsbt =
+      'cHNidP8BAFICAAAAAXuAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AQAAAAAAAAAWABRZl0hWw2X2gYdEx+kt1lEuzMdGIIAAAAAA==';
+    expect(parser.detectPayload(qaPsbt).type).toBe('psbt');
+  });
 });

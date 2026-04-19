@@ -11,6 +11,8 @@ const SAMPLE_HINTS = [
   'Válido (Lightning): lnbc... / lntb... (heurístico)',
   'Inválido (controle): texto-livre-123 sem formato conhecido'
 ];
+const BASE64_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+const BASE64_MAP = new Map([...BASE64_ALPHABET].map((c, i) => [c, i]));
 
 const WATCH_ONLY_TYPES = new Set<ParsedQRPayload['type']>(['xpub', 'ypub', 'zpub']);
 const isWatchOnlyType = (type: ParsedQRPayload['type']): type is 'xpub' | 'ypub' | 'zpub' =>
@@ -74,7 +76,7 @@ const formatMetadata = (payload: ParsedQRPayload): string | undefined => {
   return undefined;
 };
 
-const getDetectionMaturity = (type?: ParsedQRPayload['type']): string => {
+export const getDetectionMaturity = (type?: ParsedQRPayload['type']): string => {
   if (!type || type === 'unknown') {
     return 'não aplicável';
   }
@@ -117,17 +119,40 @@ const buildKeyFingerprint = (raw: string): string => {
 };
 
 const decodeBase64ToBytes = (value: string): Uint8Array | undefined => {
-  try {
-    const normalized = value.replace(/\s+/g, '');
-    const binary = atob(normalized);
-    const out = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i += 1) {
-      out[i] = binary.charCodeAt(i);
+  const normalized = value.replace(/\s+/g, '').replace(/-/g, '+').replace(/_/g, '/');
+  if (!normalized) return undefined;
+  const unpadded = normalized.replace(/=+$/g, '');
+  if (!unpadded || unpadded.includes('=')) return undefined;
+
+  const missingPadding = unpadded.length % 4;
+  if (missingPadding === 1) return undefined;
+  const padded = missingPadding === 0 ? unpadded : `${unpadded}${'='.repeat(4 - missingPadding)}`;
+
+  const out: number[] = [];
+  for (let i = 0; i < padded.length; i += 4) {
+    const c0 = padded[i];
+    const c1 = padded[i + 1];
+    const c2 = padded[i + 2];
+    const c3 = padded[i + 3];
+    if (!c0 || !c1 || !c2 || !c3) return undefined;
+
+    const v0 = BASE64_MAP.get(c0);
+    const v1 = BASE64_MAP.get(c1);
+    const v2 = c2 === '=' ? 0 : BASE64_MAP.get(c2);
+    const v3 = c3 === '=' ? 0 : BASE64_MAP.get(c3);
+    if (v0 === undefined || v1 === undefined || v2 === undefined || v3 === undefined) {
+      return undefined;
     }
-    return out;
-  } catch {
-    return undefined;
+    if (c2 === '=' && c3 !== '=') return undefined;
+    if ((c2 === '=' || c3 === '=') && i + 4 !== padded.length) return undefined;
+
+    const combined = (v0 << 18) | (v1 << 12) | (v2 << 6) | v3;
+    out.push((combined >> 16) & 0xff);
+    if (c2 !== '=') out.push((combined >> 8) & 0xff);
+    if (c3 !== '=') out.push(combined & 0xff);
   }
+
+  return new Uint8Array(out);
 };
 
 const readCompactSize = (

@@ -7,7 +7,8 @@ import {
   buildManualClearSnapshot,
   buildPsbtReviewSnapshot,
   buildWatchOnlyPreparationSnapshot,
-  buildWatchOnlySnapshot
+  buildWatchOnlySnapshot,
+  getDetectionMaturity
 } from './App';
 
 const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
@@ -225,5 +226,14 @@ describe('app flow regressions', () => {
     expect(seedDetection?.autoClearedSensitiveData).toBe(true);
     expect(buildWatchOnlySnapshot(seedDetection?.detected).ready).toBe(false);
     expect(buildPsbtReviewSnapshot(seedDetection?.detected, true).ready).toBe(false);
+  });
+
+  it('classifica como estável a PSBT mínima aprovada no QA manual', () => {
+    const qaPsbt =
+      'cHNidP8BAFICAAAAAXuAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AQAAAAAAAAAWABRZl0hWw2X2gYdEx+kt1lEuzMdGIIAAAAAA==';
+    const detection = buildDetectionSnapshot(parser, qaPsbt);
+
+    expect(detection?.detected?.type).toBe('psbt');
+    expect(getDetectionMaturity(detection?.detected?.type)).toBe('estável');
   });
 });
