@@ -82,6 +82,15 @@ describe('QR parser', () => {
     expect(result.type).toBe('unknown');
   });
 
+  it('aceita vetor bech32 canônico válido (BIP173) e rejeita variante com checksum inválido', () => {
+    const valid = parser.detectPayload('bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4');
+    const invalid = parser.detectPayload('bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kygt080');
+
+    expect(valid.type).toBe('bitcoin_address');
+    expect(valid.metadata?.network).toBe('mainnet');
+    expect(invalid.type).toBe('unknown');
+  });
+
   it('detecta psbt base64', () => {
     const psbt =
       'cHNidP8BADwCAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////wD/////AQAAAAAAAAAAAAAAAAAAAAA=';
