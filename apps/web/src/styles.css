@@ -166,3 +166,40 @@ button {
   color: #a8d6ff;
   font-weight: 600;
 }
+
+.psbt-panel {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #6a4c1c;
+  background: #231a0c;
+}
+
+.psbt-panel h3 {
+  margin: 0 0 8px;
+  color: #ffd27d;
+}
+
+.psbt-state {
+  margin: 0 0 8px;
+  color: #ffe2aa;
+  font-weight: 600;
+}
+
+.psbt-guidance {
+  margin: 0 0 10px;
+  color: #f6e7ca;
+}
+
+.psbt-next-step-title {
+  margin: 10px 0 4px;
+  color: #ffd89c;
+  font-weight: 600;
+}
+
+.psbt-panel ul,
+.psbt-panel ol {
+  margin: 6px 0 0;
+  padding-left: 20px;
+  color: #fff0d4;
+}

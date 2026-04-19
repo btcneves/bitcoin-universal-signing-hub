@@ -16,7 +16,7 @@ Referência de execução: `docs/web-functional-checklist.md`.
 
 - refinamento do fluxo QR/payload detection (entrada, feedback e robustez);
 - watch-only local pós-detecção evoluído com resumo de escopo/descriptor e estado “preparado” offline; próximo passo é UX navegável com export/import controlado sem rede;
-- PSBT UX e roundtrip local com integração externa mínima validada.
+- PSBT UX pós-detecção já evoluída para revisão offline local; próximo passo é roundtrip local com integração externa mínima validada.
 
 ### P2 — Consolidação operacional
 
