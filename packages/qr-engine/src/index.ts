@@ -1,5 +1,4 @@
 import { sha256 } from '@noble/hashes/sha2';
-import { address as btcAddress, Psbt } from 'bitcoinjs-lib';
 import { validateMnemonic } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import type { QRService } from '@bursh/core-domain';
@@ -7,13 +6,21 @@ import type { ParsedQRPayload } from '@bursh/shared-types';
 
 const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 const BASE58_MAP = new Map([...BASE58_ALPHABET].map((c, i) => [c, i]));
-const PSBT_MAGIC_HEX = '70736274ff';
-const PSBT_MAGIC_BASE64 = 'cHNidP8';
+const PSBT_MAGIC_BYTES = new Uint8Array([0x70, 0x73, 0x62, 0x74, 0xff]);
+const BECH32_CHARS = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
 
 const bytesEqual = (a: Uint8Array, b: Uint8Array): boolean => {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i += 1) {
     if (a[i] !== b[i]) return false;
+  }
+  return true;
+};
+
+const startsWithBytes = (value: Uint8Array, prefix: Uint8Array): boolean => {
+  if (value.length < prefix.length) return false;
+  for (let i = 0; i < prefix.length; i += 1) {
+    if (value[i] !== prefix[i]) return false;
   }
   return true;
 };
@@ -31,6 +38,20 @@ const hexToBytes = (hex: string): Uint8Array => {
     bytes[i] = Number.parseInt(hex.slice(i * 2, i * 2 + 2), 16);
   }
   return bytes;
+};
+
+const decodeBase64 = (value: string): Uint8Array | undefined => {
+  try {
+    const normalized = value.replace(/\s+/g, '');
+    const bin = atob(normalized);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i += 1) {
+      out[i] = bin.charCodeAt(i);
+    }
+    return out;
+  } catch {
+    return undefined;
+  }
 };
 
 const decodeBase58Check = (value: string): Uint8Array | undefined => {
@@ -76,40 +97,35 @@ const parseExtPub = (
 };
 
 const validateBase58Address = (value: string): { ok: boolean; network?: 'mainnet' | 'testnet' } => {
-  try {
-    const decoded = btcAddress.fromBase58Check(value);
-    if ([0x00, 0x05].includes(decoded.version)) return { ok: true, network: 'mainnet' };
-    if ([0x6f, 0xc4].includes(decoded.version)) return { ok: true, network: 'testnet' };
-    return { ok: false };
-  } catch {
-    return { ok: false };
-  }
+  const decoded = decodeBase58Check(value);
+  if (!decoded || decoded.length < 1) return { ok: false };
+
+  const version = decoded[0];
+  if (version === 0x00 || version === 0x05) return { ok: true, network: 'mainnet' };
+  if (version === 0x6f || version === 0xc4) return { ok: true, network: 'testnet' };
+  return { ok: false };
 };
 
 const validateBech32 = (value: string): { ok: boolean; network?: 'mainnet' | 'testnet' } => {
-  try {
-    const decoded = btcAddress.fromBech32(value);
-    const network =
-      decoded.prefix === 'bc' ? 'mainnet' : decoded.prefix === 'tb' ? 'testnet' : undefined;
-    if (!network) return { ok: false };
-
-    if (decoded.version < 0 || decoded.version > 16) return { ok: false };
-    if (decoded.data.length < 2 || decoded.data.length > 40) return { ok: false };
-    if (decoded.version === 0 && ![20, 32].includes(decoded.data.length)) return { ok: false };
-    if (decoded.version > 0 && decoded.data.length < 2) return { ok: false };
-
-    return { ok: true, network };
-  } catch {
-    const normalized = value.toLowerCase();
-    const network = normalized.startsWith('bc1')
-      ? 'mainnet'
-      : normalized.startsWith('tb1')
-        ? 'testnet'
-        : undefined;
-    if (!network) return { ok: false };
-    const bech32Like = /^(bc1|tb1)[ac-hj-np-z02-9]{11,71}$/i.test(value);
-    return bech32Like ? { ok: true, network } : { ok: false };
+  const normalized = value.trim();
+  if (
+    !normalized ||
+    (normalized !== normalized.toLowerCase() && normalized !== normalized.toUpperCase())
+  ) {
+    return { ok: false };
   }
+
+  const lower = normalized.toLowerCase();
+  const separator = lower.lastIndexOf('1');
+  if (separator <= 0 || separator + 7 > lower.length) return { ok: false };
+
+  const prefix = lower.slice(0, separator);
+  const data = lower.slice(separator + 1);
+  if (prefix !== 'bc' && prefix !== 'tb') return { ok: false };
+
+  if ([...data].some((c) => !BECH32_CHARS.includes(c))) return { ok: false };
+
+  return { ok: true, network: prefix === 'bc' ? 'mainnet' : 'testnet' };
 };
 
 const validatePsbtPayload = (input: string): boolean => {
@@ -118,19 +134,13 @@ const validatePsbtPayload = (input: string): boolean => {
     ? trimmed.slice('ur:crypto-psbt/'.length)
     : trimmed;
 
-  try {
-    if (/^[0-9a-fA-F]+$/.test(candidate)) {
-      if (candidate.toLowerCase().startsWith(PSBT_MAGIC_HEX)) return true;
-      Psbt.fromHex(candidate);
-      return true;
-    }
-
-    if (candidate.startsWith(PSBT_MAGIC_BASE64)) return true;
-    Psbt.fromBase64(candidate);
-    return true;
-  } catch {
-    return false;
+  if (/^[0-9a-fA-F]+$/.test(candidate) && candidate.length % 2 === 0) {
+    return startsWithBytes(hexToBytes(candidate), PSBT_MAGIC_BYTES);
   }
+
+  const decodedBase64 = decodeBase64(candidate);
+  if (!decodedBase64) return false;
+  return startsWithBytes(decodedBase64, PSBT_MAGIC_BYTES);
 };
 
 const validateBip39Mnemonic = (input: string): boolean => {
