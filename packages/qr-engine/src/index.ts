@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { address as btcAddress, Psbt } from 'bitcoinjs-lib';
-import { validateMnemonic, wordlist } from '@scure/bip39';
+import { validateMnemonic } from '@scure/bip39';
+import { wordlist } from '@scure/bip39/wordlists/english';
 import type { QRService } from '@bursh/core-domain';
 import type { ParsedQRPayload } from '@bursh/shared-types';
 
@@ -26,21 +27,26 @@ const decodeBase58Check = (value: string): Buffer | undefined => {
 
   const payload = out.subarray(0, -4);
   const checksum = out.subarray(-4);
-  const digest = createHash('sha256').update(createHash('sha256').update(payload).digest()).digest();
+  const digest = createHash('sha256')
+    .update(createHash('sha256').update(payload).digest())
+    .digest();
   if (!digest.subarray(0, 4).equals(checksum)) return undefined;
   return payload;
 };
 
-const parseExtPub = (value: string): { type: 'xpub' | 'ypub' | 'zpub'; network: 'mainnet' | 'testnet' } | undefined => {
+const parseExtPub = (
+  value: string
+): { type: 'xpub' | 'ypub' | 'zpub'; network: 'mainnet' | 'testnet' } | undefined => {
   const decoded = decodeBase58Check(value);
   if (!decoded || decoded.length !== 78) return undefined;
   const version = decoded.readUInt32BE(0);
-  const table: Record<number, { type: 'xpub' | 'ypub' | 'zpub'; network: 'mainnet' | 'testnet' }> = {
-    0x0488b21e: { type: 'xpub', network: 'mainnet' },
-    0x049d7cb2: { type: 'ypub', network: 'mainnet' },
-    0x04b24746: { type: 'zpub', network: 'mainnet' },
-    0x043587cf: { type: 'xpub', network: 'testnet' }
-  };
+  const table: Record<number, { type: 'xpub' | 'ypub' | 'zpub'; network: 'mainnet' | 'testnet' }> =
+    {
+      0x0488b21e: { type: 'xpub', network: 'mainnet' },
+      0x049d7cb2: { type: 'ypub', network: 'mainnet' },
+      0x04b24746: { type: 'zpub', network: 'mainnet' },
+      0x043587cf: { type: 'xpub', network: 'testnet' }
+    };
   return table[version];
 };
 
@@ -58,7 +64,8 @@ const validateBase58Address = (value: string): { ok: boolean; network?: 'mainnet
 const validateBech32 = (value: string): { ok: boolean; network?: 'mainnet' | 'testnet' } => {
   try {
     const decoded = btcAddress.fromBech32(value);
-    const network = decoded.prefix === 'bc' ? 'mainnet' : decoded.prefix === 'tb' ? 'testnet' : undefined;
+    const network =
+      decoded.prefix === 'bc' ? 'mainnet' : decoded.prefix === 'tb' ? 'testnet' : undefined;
     if (!network) return { ok: false };
 
     if (decoded.version < 0 || decoded.version > 16) return { ok: false };
@@ -74,7 +81,9 @@ const validateBech32 = (value: string): { ok: boolean; network?: 'mainnet' | 'te
 
 const validatePsbtPayload = (input: string): boolean => {
   const trimmed = input.trim();
-  const candidate = trimmed.startsWith('ur:crypto-psbt/') ? trimmed.slice('ur:crypto-psbt/'.length) : trimmed;
+  const candidate = trimmed.startsWith('ur:crypto-psbt/')
+    ? trimmed.slice('ur:crypto-psbt/'.length)
+    : trimmed;
 
   try {
     if (/^[0-9a-fA-F]+$/.test(candidate)) {
