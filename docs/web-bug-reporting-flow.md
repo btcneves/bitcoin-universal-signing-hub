@@ -6,7 +6,7 @@ Fluxo padrão da fase atual: **testei -> documentei -> abri issue**.
 
 ## Passo 1 — Executar checklist por prioridade
 
-1. Seguir a ordem definida em `docs/web-test-run-plan.md`.
+1. Seguir a ordem definida em `docs/run-first-manual-web-validation.md`.
 2. Executar primeiro casos **P0**, depois **P1** e por fim **P2**.
 3. Usar `docs/web-functional-checklist.md` como fonte de casos e `docs/web-functional-expected-results.md` como referência de aceitação.
 
@@ -46,8 +46,8 @@ Não abrir issue quando:
 - Impacto em zona de segurança indicado (quando aplicável).
 - Evidência anexada (print/log/relatório).
 
-## Convenção de prioridade sugerida
+## Convenção de prioridade (aplicada ao estado atual do app web)
 
-- **P0**: risco de segurança, perda de controle do fluxo, falso positivo/negativo crítico em sensível, impossibilidade de executar fluxo principal.
-- **P1**: funcionalidade principal degradada com workaround.
-- **P2**: inconsistência de UX, texto, clareza de estado ou problema de baixa frequência sem risco direto.
+- **P0**: quebra de fluxo principal (app não abre, trava, erro impeditivo), falha de limpeza sensível (`bip39`/`psbt` permanece visível), ou falso positivo/negativo crítico em tipo sensível que comprometa a segurança operacional local.
+- **P1**: fluxo funcional principal degradado, mas com workaround (detecção estável inconsistente, erro de parsing com recuperação parcial, comportamento intermitente em casos estáveis).
+- **P2**: problema não bloqueante de clareza/UX/heurística/experimental (mensagem, rótulo, aviso heurístico, ordem visual, comportamento complementar sem risco direto).

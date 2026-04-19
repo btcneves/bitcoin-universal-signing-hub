@@ -66,4 +66,4 @@ Objetivo: executar validação funcional manual real do `apps/web` com evidênci
 
 1. Casos WF-A01..WF-C02 executados com evidência mínima.
 2. Falhas relevantes registradas em issue com reprodução clara.
-3. Priorização de correções refletida no roadmap da próxima fase.
+3. Priorização de bugs funcionais refletida no fluxo `docs/web-bug-reporting-flow.md` e no status do projeto.

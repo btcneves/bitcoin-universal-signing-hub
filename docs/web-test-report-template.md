@@ -7,7 +7,7 @@ Use este modelo para registrar uma sessão real de teste manual do `apps/web`.
 - Data:
 - Responsável:
 - Objetivo da rodada (ex.: smoke P0, regressão pós-ajuste):
-- Plano usado (ex.: `docs/web-test-run-plan.md`):
+- Plano usado (ex.: `docs/run-first-manual-web-validation.md`):
 
 ## 2) Ambiente
 

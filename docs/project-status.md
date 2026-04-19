@@ -2,6 +2,12 @@
 
 Atualizado em: **2026-04-19**.
 
+## 0) Marco de fase (preparação -> execução manual)
+
+- **Concluído em 2026-04-19**: preparação de validação manual web (checklist, expected results, template de report, fluxo de bug e issue template) está finalizada.
+- **Próxima etapa oficial**: execução real da checklist com coleta de evidências por caso e abertura de bugs funcionais baseados em observação real.
+- **Regra de origem de bug nesta fase**: issue funcional deve nascer de execução documentada (não de especulação).
+
 ## 1) Estado funcional atual do produto web (`apps/web`)
 
 ### Funcional hoje (confirmado no código)
@@ -61,29 +67,23 @@ Atualizado em: **2026-04-19**.
 4. **Monorepo por módulos de domínio**  
    Justificativa: clareza de fronteiras e evolução incremental por pacote.
 
-## 4) Próxima fase prática (prioridade realista)
+## 4) Próxima fase prática (execução manual real)
 
-### P0
+### P0 — executar e registrar
 
-1. executar `docs/web-functional-checklist.md` com evidências (pass/fail por item);
-2. fechar gaps de validação funcional que bloqueiam confiança mínima de uso local.
+1. executar `docs/web-functional-checklist.md` conforme `docs/run-first-manual-web-validation.md`;
+2. registrar evidência por caso no `docs/web-test-report-template.md`;
+3. abrir bugs funcionais somente para falhas/parciais observadas, com rastreabilidade (`WF-*` + commit + evidência).
 
-### P1
+### P1 — corrigir bloqueios reais encontrados
 
-1. refinar fluxo de entrada/detecção QR (inclusive erros e feedback de UX);
-2. consolidar watch-only real (sem seed), com percurso de uso explícito;
-3. fechar UX de PSBT (parse -> revisão -> saída para assinador externo -> retorno);
-4. definir matriz mínima de compatibilidade de integrações externas prioritárias.
+1. corrigir divergências estáveis que degradam o fluxo principal com workaround;
+2. reexecutar casos impactados e atualizar evidência.
 
-### P2
+### P2 — tratar inconsistências não bloqueantes
 
-1. integração real com assinador/carteira externa, com roundtrip reproduzível;
-2. critérios objetivos de release para uso operacional controlado.
-
-### P3
-
-1. iniciar trilha Android apenas após P0/P1 com evidência;
-2. evoluir Secure USB após critérios mínimos de maturidade funcional no web.
+1. ajustar problemas de clareza/UX/heurística/experimental sem risco direto;
+2. manter backlog priorizado por impacto observado na rodada.
 
 ## 5) Riscos técnicos ainda abertos
 
