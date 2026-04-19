@@ -2,10 +2,12 @@
 
 Atualizado em: **2026-04-19**.
 
-## 0) Marco de fase (preparação -> execução manual)
+## 0) Marco de fase (execução manual parcial -> expansão funcional)
 
-- **Concluído em 2026-04-19**: preparação de validação manual web (checklist, expected results, template de report, fluxo de bug e issue template) está finalizada.
-- **Próxima etapa oficial**: execução real da checklist com coleta de evidências por caso e abertura de bugs funcionais baseados em observação real.
+- **Concluído em 2026-04-19**: preparação de validação manual web (checklist, expected results, template de report, fluxo de bug e issue template) foi finalizada e a execução parcial já começou.
+- **Evidência real coletada em 2026-04-19**: houve bugs funcionais reais encontrados durante a rodada manual parcial e já corrigidos (falso positivo de Bech32 inválido e falso positivo de PSBT truncada).
+- **Estado atual**: app web está mais robusto que no início da rodada, com correções já refletidas no comportamento observado manualmente.
+- **Próxima etapa oficial**: sair de “preparação” para **expansão de validação funcional** baseada em evidência real.
 - **Regra de origem de bug nesta fase**: issue funcional deve nascer de execução documentada (não de especulação).
 
 ## 1) Estado funcional atual do produto web (`apps/web`)
@@ -67,23 +69,26 @@ Atualizado em: **2026-04-19**.
 4. **Monorepo por módulos de domínio**  
    Justificativa: clareza de fronteiras e evolução incremental por pacote.
 
-## 4) Próxima fase prática (execução manual real)
+## 4) Próxima fase prática (expansão de validação funcional)
 
-### P0 — executar e registrar
+### P0 — consolidar rodada 1 parcial
 
-1. executar `docs/web-functional-checklist.md` conforme `docs/run-first-manual-web-validation.md`;
-2. registrar evidência por caso no `docs/web-test-report-template.md`;
-3. abrir bugs funcionais somente para falhas/parciais observadas, com rastreabilidade (`WF-*` + commit + evidência).
+1. manter registro objetivo da rodada em `docs/web-manual-validation-round-1.md`;
+2. garantir rastreabilidade dos bugs reais já corrigidos (Bech32 inválido e PSBT truncada);
+3. alinhar checklist/expected-results com os vetores efetivamente validados.
 
-### P1 — corrigir bloqueios reais encontrados
+### P1 — expandir casos funcionais prioritários (sem abrir novas frentes)
 
-1. corrigir divergências estáveis que degradam o fluxo principal com workaround;
-2. reexecutar casos impactados e atualizar evidência.
+1. watch-only mais profundo (casos positivos e negativos de importação/estado);
+2. PSBT adicional (variações de formato, truncamento e quase-válidos);
+3. address/network adicional (mainnet/testnet e negativos de checksum/prefixo);
+4. UX de erro e feedback com foco em mensagens acionáveis;
+5. offline em fluxos menos triviais já existentes na UI atual.
 
 ### P2 — tratar inconsistências não bloqueantes
 
 1. ajustar problemas de clareza/UX/heurística/experimental sem risco direto;
-2. manter backlog priorizado por impacto observado na rodada.
+2. manter backlog priorizado por impacto observado em execução real.
 
 ## 5) Riscos técnicos ainda abertos
 
@@ -99,4 +104,4 @@ Atualizado em: **2026-04-19**.
 
 ## 7) Critério para avanço de fase
 
-A próxima fase de produto só avança quando houver evidência reproduzível da validação funcional web (checklist completo), com pendências remanescentes priorizadas por risco real.
+A expansão da próxima fase de produto avança com evidência reproduzível incremental da validação funcional web (incluindo a rodada 1 parcial já executada), mantendo pendências priorizadas por risco real.
