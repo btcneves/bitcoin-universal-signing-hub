@@ -115,4 +115,26 @@ describe('QR parser', () => {
     const truncatedPsbt = 'cHNidP8BAHECAAAAAQAAAAAAAAAAAAAAAAAAAA';
     expect(parser.detectPayload(truncatedPsbt).type).toBe('unknown');
   });
+
+  it('aceita payload de psbt mínima compatível validada em QA manual', () => {
+    const qaPsbt =
+      'cHNidP8BAFICAAAAAXuAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AQAAAAAAAAAWABRZl0hWw2X2gYdEx+kt1lEuzMdGIIAAAAAA==';
+    expect(parser.detectPayload(qaPsbt).type).toBe('psbt');
+  });
+
+  it('rejeita base64 com caractere inválido no payload de psbt', () => {
+    const invalidBase64Psbt =
+      'cHNidP8BADwCAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////wD/////AQAAAAAAAAAAAAAAAAAAAAA#';
+    expect(parser.detectPayload(invalidBase64Psbt).type).toBe('unknown');
+  });
+
+  it('tolera whitespace periférico e interno em payload psbt', () => {
+    const basePsbt =
+      'cHNidP8BADwCAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////wD/////AQAAAAAAAAAAAAAAAAAAAAA=';
+    const psbtWithWhitespace = `  ${basePsbt}\n`;
+    const psbtWithInternalWhitespace = `${basePsbt.slice(0, 16)} \t\n${basePsbt.slice(16)}`;
+
+    expect(parser.detectPayload(psbtWithWhitespace).type).toBe('psbt');
+    expect(parser.detectPayload(psbtWithInternalWhitespace).type).toBe('psbt');
+  });
 });
