@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
-import { address as btcAddress } from 'bitcoinjs-lib';
+import { address as btcAddress, Psbt } from 'bitcoinjs-lib';
+import { validateMnemonic, wordlist } from '@scure/bip39';
 import type { QRService } from '@bursh/core-domain';
 import type { ParsedQRPayload } from '@bursh/shared-types';
 
@@ -71,22 +72,35 @@ const validateBech32 = (value: string): { ok: boolean; network?: 'mainnet' | 'te
   }
 };
 
-const isPsbtPayload = (input: string): boolean => {
+const validatePsbtPayload = (input: string): boolean => {
   const trimmed = input.trim();
-  if (trimmed.startsWith('ur:crypto-psbt/')) return true;
+  const candidate = trimmed.startsWith('ur:crypto-psbt/') ? trimmed.slice('ur:crypto-psbt/'.length) : trimmed;
+
   try {
-    const raw = Buffer.from(trimmed, 'base64');
-    return raw.subarray(0, 5).equals(Buffer.from([0x70, 0x73, 0x62, 0x74, 0xff]));
+    if (/^[0-9a-fA-F]+$/.test(candidate)) {
+      Psbt.fromHex(candidate);
+      return true;
+    }
+
+    Psbt.fromBase64(candidate);
+    return true;
   } catch {
     return false;
   }
 };
 
+const validateBip39Mnemonic = (input: string): boolean => {
+  const normalized = input.trim().replace(/\s+/g, ' ');
+  const words = normalized.split(' ');
+  if (![12, 15, 18, 21, 24].includes(words.length)) return false;
+  return validateMnemonic(normalized.normalize('NFKD'), wordlist);
+};
+
 export class UniversalQrService implements QRService {
   detectPayload(input: string): ParsedQRPayload {
     const trimmed = input.trim();
-    const words = trimmed.split(/\s+/);
-    if ([12, 15, 18, 21, 24].includes(words.length)) {
+
+    if (validateBip39Mnemonic(trimmed)) {
       return { type: 'bip39', raw: trimmed };
     }
 
@@ -99,7 +113,7 @@ export class UniversalQrService implements QRService {
       return { type: 'lightning_invoice', raw: trimmed };
     }
 
-    if (isPsbtPayload(trimmed)) {
+    if (validatePsbtPayload(trimmed)) {
       return { type: 'psbt', raw: trimmed };
     }
 

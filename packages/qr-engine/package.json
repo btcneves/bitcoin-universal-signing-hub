@@ -13,6 +13,7 @@
     "@bursh/core-domain": "file:../core-domain",
     "@bursh/shared-types": "file:../shared-types",
     "@bursh/bitcoin-engine": "file:../bitcoin-engine",
-    "bitcoinjs-lib": "^6.1.7"
+    "bitcoinjs-lib": "^6.1.7",
+    "@scure/bip39": "^1.6.0"
   }
 }

@@ -17,7 +17,8 @@
     "@bursh/qr-engine": "file:../../packages/qr-engine",
     "@bursh/ui": "file:../../packages/ui",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "@bursh/shared-types": "file:../../packages/shared-types"
   },
   "devDependencies": {
     "@types/react": "^18.3.18",

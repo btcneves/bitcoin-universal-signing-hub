@@ -4,7 +4,7 @@ WORKDIR /workspace
 
 RUN corepack enable
 
-COPY package.json pnpm-workspace.yaml tsconfig.base.json vitest.workspace.ts .eslintrc.cjs .prettierrc ./
+COPY package.json pnpm-workspace.yaml tsconfig.base.json vitest.workspace.ts .eslintrc.cjs eslint.config.cjs .prettierrc ./
 COPY apps ./apps
 COPY packages ./packages
 COPY scripts ./scripts
