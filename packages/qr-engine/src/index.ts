@@ -8,6 +8,9 @@ const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvw
 const BASE58_MAP = new Map([...BASE58_ALPHABET].map((c, i) => [c, i]));
 const PSBT_MAGIC_BYTES = new Uint8Array([0x70, 0x73, 0x62, 0x74, 0xff]);
 const BECH32_CHARS = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+const BECH32_CONST = 1;
+const BECH32M_CONST = 0x2bc830a3 >>> 0;
+const BECH32_MAP = new Map([...BECH32_CHARS].map((c, i) => [c, i]));
 
 const bytesEqual = (a: Uint8Array, b: Uint8Array): boolean => {
   if (a.length !== b.length) return false;
@@ -120,10 +123,71 @@ const validateBech32 = (value: string): { ok: boolean; network?: 'mainnet' | 'te
   if (separator <= 0 || separator + 7 > lower.length) return { ok: false };
 
   const prefix = lower.slice(0, separator);
-  const data = lower.slice(separator + 1);
+  const dataPart = lower.slice(separator + 1);
   if (prefix !== 'bc' && prefix !== 'tb') return { ok: false };
 
-  if ([...data].some((c) => !BECH32_CHARS.includes(c))) return { ok: false };
+  const data = [...dataPart].map((c) => BECH32_MAP.get(c));
+  if (data.some((v) => v === undefined)) return { ok: false };
+  const words = data as number[];
+
+  const expandHrp = (hrp: string): number[] => {
+    const high = [...hrp].map((c) => c.charCodeAt(0) >> 5);
+    const low = [...hrp].map((c) => c.charCodeAt(0) & 31);
+    return [...high, 0, ...low];
+  };
+
+  const polymod = (values: number[]): number => {
+    const generators = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3];
+    let chk = 1 >>> 0;
+    for (const valueWord of values) {
+      const top = chk >> 25;
+      chk = ((((chk & 0x1ffffff) << 5) ^ valueWord) & 0xffffffff) >>> 0;
+      for (let i = 0; i < generators.length; i += 1) {
+        const generator = generators[i];
+        if (generator !== undefined && (top >> i) & 1) chk = (chk ^ generator) >>> 0;
+      }
+    }
+    return chk >>> 0;
+  };
+
+  const checksum = polymod([...expandHrp(prefix), ...words]);
+  const isBech32 = checksum === BECH32_CONST;
+  const isBech32m = checksum === BECH32M_CONST;
+  if (!isBech32 && !isBech32m) return { ok: false };
+
+  const witnessVersion = words[0];
+  if (witnessVersion === undefined) return { ok: false };
+  if (witnessVersion < 0 || witnessVersion > 16) return { ok: false };
+
+  const dataWords = words.slice(1, -6);
+  if (dataWords.length === 0) return { ok: false };
+
+  const convertBits = (inputWords: number[], from: number, to: number): number[] | undefined => {
+    let acc = 0;
+    let bits = 0;
+    const maxValue = (1 << to) - 1;
+    const out: number[] = [];
+    for (const word of inputWords) {
+      if (word < 0 || word >= 1 << from) return undefined;
+      acc = (acc << from) | word;
+      bits += from;
+      while (bits >= to) {
+        bits -= to;
+        out.push((acc >> bits) & maxValue);
+      }
+    }
+    if (bits > 0 && (acc << (to - bits)) & maxValue) return undefined;
+    return out;
+  };
+
+  const witnessProgram = convertBits(dataWords, 5, 8);
+  if (!witnessProgram) return { ok: false };
+  if (witnessProgram.length < 2 || witnessProgram.length > 40) return { ok: false };
+  if (witnessVersion === 0 && witnessProgram.length !== 20 && witnessProgram.length !== 32) {
+    return { ok: false };
+  }
+  if (witnessVersion === 0 && !isBech32) return { ok: false };
+  if (witnessVersion !== 0 && !isBech32m) return { ok: false };
 
   return { ok: true, network: prefix === 'bc' ? 'mainnet' : 'testnet' };
 };
