@@ -16,4 +16,10 @@ describe('app flow', () => {
 
     expect(parser.detectPayload(invalidXpub).type).toBe('unknown');
   });
+
+  it('não promove PSBT truncada para fluxo sensível', () => {
+    const truncatedPsbt = 'cHNidP8BAHECAAAAAQAAAAAAAAAAAAAAAAAAAA';
+
+    expect(parser.detectPayload(truncatedPsbt).type).toBe('unknown');
+  });
 });
