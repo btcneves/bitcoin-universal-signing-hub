@@ -12,7 +12,9 @@
     "format": "prettier --write .",
     "prepare": "husky",
     "install:ci": "pnpm install --frozen-lockfile=false",
-    "validate:ci": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "validate:ci": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "usb:prepare-web": "bash infra/usb/scripts/prepare-web-bundle.sh",
+    "usb:build-iso": "bash infra/usb/scripts/build-iso.sh"
   },
   "devDependencies": {
     "@types/node": "^22.10.1",

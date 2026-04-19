@@ -65,7 +65,7 @@ Atualizado em: **2026-04-19**.
 
 - integração operacional com assinatura externa de produção;
 - fluxo Android funcional;
-- pipeline Secure USB pronto para uso de produto;
+- pipeline Secure USB pronto para uso de produto (existe fundação executável, ainda faltam hardening e validação ampla);
 - suíte de validação manual com evidência contínua automatizada por release gate.
 
 ## 2) Estado técnico consolidado (base)
@@ -79,6 +79,28 @@ Atualizado em: **2026-04-19**.
 - build
 - dev
 - app web abre localmente
+- Secure USB Edition v0 foundation gera ISO live local com autostart+kiosk (dependente de `live-build` no host)
+
+## 2.1) Diagnóstico objetivo — Secure USB no repositório (2026-04-19)
+
+### Já existia antes desta entrega
+
+- `infra/usb/scripts/build-iso.sh` como esqueleto (placeholder textual, sem geração real de ISO);
+- script de kiosk e unidade systemd isolados (`infra/usb/overlay/...` e `infra/usb/etc/systemd/...`) sem pipeline live completo;
+- referências de roadmap/status citando Secure USB como etapa futura.
+
+### Era placeholder/documentação
+
+- build script anterior não executava `live-build` nem produzia artefato bootável real;
+- ausência de política implementada de separação RAM vs persistência em boot;
+- ausência de autostart completo (servidor local + browser kiosk + encadeamento de serviços).
+
+### Agora implementado como fundação executável mínima
+
+- pipeline Debian Live com `live-build` em `infra/usb/live-build/config`;
+- build reproduzível da ISO (`infra/usb/scripts/build-iso.sh`) com bundle web integrado automaticamente;
+- autostart via systemd: init de storage policy -> servidor local -> kiosk fullscreen;
+- política operacional de persistência: partição opcional `BURSH-DATA` somente para não sensíveis, sessão sensível em RAM.
 
 ## 3) Decisões técnicas consolidadas
 

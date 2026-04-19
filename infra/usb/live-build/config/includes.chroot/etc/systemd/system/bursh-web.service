@@ -1,0 +1,13 @@
+[Unit]
+Description=BURSH local offline web server
+After=network.target bursh-storage-init.service
+Requires=bursh-storage-init.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/start-bursh-web-server.sh
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

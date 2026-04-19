@@ -1,16 +1,43 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ISO_NAME="bursh-secure-usb.iso"
-WORKDIR="$(pwd)/infra/usb/build"
-ROOTFS="$WORKDIR/rootfs"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+USB_DIR="$ROOT_DIR/infra/usb"
+LIVE_BUILD_TEMPLATE_DIR="$USB_DIR/live-build"
+BUILD_DIR="$USB_DIR/build/live-build-workdir"
+DIST_DIR="$USB_DIR/dist"
+OUTPUT_ISO_NAME="bursh-secure-usb-amd64.iso"
 
-mkdir -p "$ROOTFS"
-cp -r infra/usb/overlay/* "$ROOTFS" || true
+if ! command -v lb >/dev/null 2>&1; then
+  cat <<'MSG'
+[secure-usb] missing dependency: `lb` (Debian live-build).
+Install on Debian/Ubuntu with:
+  sudo apt-get update && sudo apt-get install -y live-build
+MSG
+  exit 1
+fi
+
+"$USB_DIR/scripts/prepare-web-bundle.sh"
+
+rm -rf "$BUILD_DIR"
+mkdir -p "$BUILD_DIR" "$DIST_DIR"
+cp -R "$LIVE_BUILD_TEMPLATE_DIR"/. "$BUILD_DIR"
+
+pushd "$BUILD_DIR" >/dev/null
+lb clean --purge
+lb config noauto --distribution bookworm --architectures amd64 --debian-installer false --archive-areas "main contrib non-free non-free-firmware" --binary-images iso-hybrid
+lb build
+popd >/dev/null
+
+SOURCE_ISO="$BUILD_DIR/live-image-amd64.hybrid.iso"
+if [[ ! -f "$SOURCE_ISO" ]]; then
+  echo "[secure-usb] build finished but ISO not found at $SOURCE_ISO"
+  exit 1
+fi
+
+cp "$SOURCE_ISO" "$DIST_DIR/$OUTPUT_ISO_NAME"
 
 cat <<MSG
-[Secure USB Edition]
-- Build skeleton prepared.
-- Integrate with Debian Live Build / ArchISO pipeline in CI runner.
-- Output target: $ISO_NAME
+[secure-usb] ISO generated:
+  $DIST_DIR/$OUTPUT_ISO_NAME
 MSG
