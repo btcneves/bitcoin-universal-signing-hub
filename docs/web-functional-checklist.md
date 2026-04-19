@@ -14,6 +14,12 @@ Objetivo: executar validação funcional manual real do `apps/web` com evidênci
 4. Para casos sensíveis, usar apenas payload de laboratório (nunca seed real).
 5. Usar o template `docs/web-test-report-template.md` para evidência por caso.
 
+## Atualização pós rodada manual parcial (2026-04-19)
+
+- Evidência real já confirmou passagens iniciais dos casos: WF-A01, WF-A02, WF-A03, WF-A04 (incluindo limpeza após auto-clear), WF-B01, WF-B02, WF-B03, WF-B04, WF-B05, WF-B06, WF-B07, WF-B09, WF-B10, WF-B11 e verificação offline básica relacionada ao WF-C02.
+- Para Bech32 válido canônico, usar explicitamente: `bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4`.
+- O vetor `bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kygt080` não deve ser tratado como “válido” nesta checklist.
+
 ## Legenda de maturidade
 
 - **Estável**: comportamento esperado e prioritário para regressão.
@@ -32,19 +38,19 @@ Objetivo: executar validação funcional manual real do `apps/web` com evidênci
 
 ## Fluxo B — detecção por tipo de payload (válido e inválido)
 
-| ID     | Maturidade   | Caso                        | Pré-condição específica                                    | Passos                                               | Resultado esperado                                                      | Resultado observado |
-| ------ | ------------ | --------------------------- | ---------------------------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------- | ------------------- |
-| WF-B01 | Estável      | xpub/ypub/zpub válido       | Ter payload válido de laboratório.                         | Colar xpub (ou ypub/zpub).                           | `Tipo detectado` correspondente + `Classificação da detecção: estável`. | ☐                   |
-| WF-B02 | Estável      | xpub inválido               | Partir de xpub válido e alterar checksum/caractere.        | Colar versão inválida.                               | Não detectar como xpub/ypub/zpub (esperado: `unknown`).                 | ☐                   |
-| WF-B03 | Estável      | Seed BIP39 válida           | Ter mnemonic de laboratório válida.                        | Colar seed 12/15/18/21/24 palavras.                  | Detecta `bip39`; limpa input automaticamente; mostra aviso de sensível. | ☐                   |
-| WF-B04 | Estável      | Seed inválida               | Seed com checksum/contagem incorreta.                      | Colar seed inválida.                                 | Não detectar `bip39`; sem limpeza automática por sensível.              | ☐                   |
-| WF-B05 | Estável      | PSBT válida                 | Ter exemplo válido (`base64`, `hex` ou `ur:crypto-psbt`).  | Colar PSBT válida.                                   | Detecta `psbt`; limpa input automaticamente; mostra aviso de sensível.  | ☐                   |
-| WF-B06 | Estável      | PSBT inválida               | Texto semelhante sem formato correto.                      | Colar payload inválido.                              | Não detectar `psbt`; sem aviso de sensível.                             | ☐                   |
-| WF-B07 | Heurístico   | Lightning válida            | Ter invoice com prefixo `lnbc` ou `lntb`.                  | Colar invoice válida.                                | Detecta `lightning_invoice`; mostra aviso de limitação heurística.      | ☐                   |
-| WF-B08 | Heurístico   | Lightning inválida          | Prefixo incorreto (`lnxx`) ou ruído.                       | Colar payload inválido.                              | Não detectar `lightning_invoice` com prefixo inválido.                  | ☐                   |
-| WF-B09 | Estável      | Address Bitcoin válida      | Endereço válido Bech32/Base58 de laboratório.              | Colar `bc1.../tb1...` ou `1.../3.../m.../n.../2...`. | Detecta `bitcoin_address`; quando disponível, mostra rede detectada.    | ☐                   |
-| WF-B10 | Estável      | Address Bitcoin inválida    | Alterar checksum/prefixo de exemplo válido.                | Colar endereço inválido.                             | Não detectar como `bitcoin_address`.                                    | ☐                   |
-| WF-B11 | Experimental | Texto multi-linha com ruído | Preparar payload com quebras, espaços e símbolos incomuns. | Colar conteúdo no textarea.                          | App não trava; mantém estado coerente (tipo válido ou `unknown`).       | ☐                   |
+| ID     | Maturidade   | Caso                        | Pré-condição específica                                                        | Passos                                               | Resultado esperado                                                      | Resultado observado |
+| ------ | ------------ | --------------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------- | ----------------------------------------------------------------------- | ------------------- |
+| WF-B01 | Estável      | xpub/ypub/zpub válido       | Ter payload válido de laboratório.                                             | Colar xpub (ou ypub/zpub).                           | `Tipo detectado` correspondente + `Classificação da detecção: estável`. | ☐                   |
+| WF-B02 | Estável      | xpub inválido               | Partir de xpub válido e alterar checksum/caractere.                            | Colar versão inválida.                               | Não detectar como xpub/ypub/zpub (esperado: `unknown`).                 | ☐                   |
+| WF-B03 | Estável      | Seed BIP39 válida           | Ter mnemonic de laboratório válida.                                            | Colar seed 12/15/18/21/24 palavras.                  | Detecta `bip39`; limpa input automaticamente; mostra aviso de sensível. | ☐                   |
+| WF-B04 | Estável      | Seed inválida               | Seed com checksum/contagem incorreta.                                          | Colar seed inválida.                                 | Não detectar `bip39`; sem limpeza automática por sensível.              | ☐                   |
+| WF-B05 | Estável      | PSBT válida                 | Ter exemplo válido (`base64`, `hex` ou `ur:crypto-psbt`).                      | Colar PSBT válida.                                   | Detecta `psbt`; limpa input automaticamente; mostra aviso de sensível.  | ☐                   |
+| WF-B06 | Estável      | PSBT inválida               | Texto semelhante sem formato correto.                                          | Colar payload inválido.                              | Não detectar `psbt`; sem aviso de sensível.                             | ☐                   |
+| WF-B07 | Heurístico   | Lightning válida            | Ter invoice com prefixo `lnbc` ou `lntb`.                                      | Colar invoice válida.                                | Detecta `lightning_invoice`; mostra aviso de limitação heurística.      | ☐                   |
+| WF-B08 | Heurístico   | Lightning inválida          | Prefixo incorreto (`lnxx`) ou ruído.                                           | Colar payload inválido.                              | Não detectar `lightning_invoice` com prefixo inválido.                  | ☐                   |
+| WF-B09 | Estável      | Address Bitcoin válida      | Endereço válido Bech32/Base58 de laboratório (preferir vetor canônico abaixo). | Colar `bc1.../tb1...` ou `1.../3.../m.../n.../2...`. | Detecta `bitcoin_address`; quando disponível, mostra rede detectada.    | ☐                   |
+| WF-B10 | Estável      | Address Bitcoin inválida    | Alterar checksum/prefixo de exemplo válido.                                    | Colar endereço inválido.                             | Não detectar como `bitcoin_address`.                                    | ☐                   |
+| WF-B11 | Experimental | Texto multi-linha com ruído | Preparar payload com quebras, espaços e símbolos incomuns.                     | Colar conteúdo no textarea.                          | App não trava; mantém estado coerente (tipo válido ou `unknown`).       | ☐                   |
 
 ## Fluxo C — erros e modo offline
 
@@ -52,6 +58,10 @@ Objetivo: executar validação funcional manual real do `apps/web` com evidênci
 | ------ | ------------ | --------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------- |
 | WF-C01 | Estável      | Mensagem de erro de parsing | Induzir input que cause erro no parser (quando aplicável).                                   | UI mostra mensagem com contexto mínimo (“revise formato e conteúdo”). | ☐                   |
 | WF-C02 | Experimental | Continuidade sem internet   | Com app carregado, desligar internet e repetir casos WF-A04, WF-B01, WF-B03, WF-B05, WF-B09. | Fluxos locais continuam funcionais sem backend obrigatório.           | ☐                   |
+
+### Vetor recomendado para WF-B09 (Bech32 válido canônico)
+
+- `bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4`
 
 ## Evidência mínima por caso
 
