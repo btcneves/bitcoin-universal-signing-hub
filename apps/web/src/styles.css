@@ -23,6 +23,13 @@ body {
   background: #111826;
 }
 
+.input-label {
+  display: inline-block;
+  margin-bottom: 6px;
+  color: #d2def7;
+  font-weight: 600;
+}
+
 textarea {
   width: 100%;
   border-radius: 8px;
@@ -30,6 +37,12 @@ textarea {
   color: #eef3ff;
   background: #0d1320;
   padding: 12px;
+}
+
+.input-state {
+  margin: 8px 0 0;
+  color: #9fb0cf;
+  font-size: 0.95rem;
 }
 
 .actions-row {
@@ -63,6 +76,12 @@ button {
 .metadata {
   color: #a3d6ff;
   margin: 4px 0;
+}
+
+.experimental-notice {
+  color: #f6be84;
+  margin: 8px 0;
+  font-weight: 600;
 }
 
 .sensitive-notice {
