@@ -371,15 +371,20 @@ const validatePsbtPayload = (input: string): boolean => {
     let outputCount: number | undefined;
 
     if (unsignedTxValues && unsignedTxValues.length === 1) {
-      const parsedCounts = parseLegacyTxInputOutputCounts(unsignedTxValues[0]);
+      const [unsignedTxValue] = unsignedTxValues;
+      if (!unsignedTxValue) return false;
+      const parsedCounts = parseLegacyTxInputOutputCounts(unsignedTxValue);
       if (!parsedCounts) return false;
       inputCount = parsedCounts.inputCount;
       outputCount = parsedCounts.outputCount;
     } else {
       if (!inputCountValues || inputCountValues.length !== 1) return false;
       if (!outputCountValues || outputCountValues.length !== 1) return false;
-      inputCount = parseCompactSizeFromBytes(inputCountValues[0]);
-      outputCount = parseCompactSizeFromBytes(outputCountValues[0]);
+      const [inputCountValue] = inputCountValues;
+      const [outputCountValue] = outputCountValues;
+      if (!inputCountValue || !outputCountValue) return false;
+      inputCount = parseCompactSizeFromBytes(inputCountValue);
+      outputCount = parseCompactSizeFromBytes(outputCountValue);
       if (inputCount === undefined || outputCount === undefined) return false;
     }
 
