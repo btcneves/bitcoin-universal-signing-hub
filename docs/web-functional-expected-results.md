@@ -16,6 +16,7 @@ Este guia complementa a checklist funcional e descreve, por fluxo, o comportamen
 
 - **Deve acontecer**
   - O campo aceita colagem e edição manual.
+  - O estado da entrada alterna entre `vazia` e `preenchida` conforme texto atual.
   - O estado de detecção atualiza sem travar a página.
 - **Não deve acontecer**
   - Crash de runtime ao colar texto aleatório.
@@ -83,6 +84,7 @@ Este guia complementa a checklist funcional e descreve, por fluxo, o comportamen
 
 - **Deve acontecer**
   - Tipo detectado: `lightning_invoice`.
+  - Mensagem de limitação heurística aparece para alertar teste parcial.
 - **Não deve acontecer**
   - Classificação incorreta como `unknown` quando prefixo válido e formato básico preservado.
 - **Status atual**: **parcial/heurístico** (detecção por prefixo).
@@ -116,7 +118,7 @@ Este guia complementa a checklist funcional e descreve, por fluxo, o comportamen
 
 - **Deve acontecer**
   - Apenas tipos sensíveis (`bip39`, `psbt`) limpam input automaticamente.
-  - Mensagem deixa explícito que houve limpeza automática.
+  - Mensagem deixa explícito que houve limpeza automática e que não há persistência local pelo app.
   - Botão de limpeza manual remove input + estado de detecção/erro.
 - **Não deve acontecer**
   - Limpeza automática em payload não sensível.

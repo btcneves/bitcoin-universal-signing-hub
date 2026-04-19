@@ -30,6 +30,8 @@ export function App() {
   const [autoClearedSensitiveData, setAutoClearedSensitiveData] = useState(false);
   const detector = useMemo(() => new UniversalQrService(), []);
 
+  const isInputEmpty = scannerInput.trim().length === 0;
+
   const handleManualClear = () => {
     setScannerInput('');
     setDetected(undefined);
@@ -60,6 +62,12 @@ export function App() {
     }
   }, [detector, scannerInput]);
 
+  const detectionStateMessage = errorMessage
+    ? 'erro no parsing'
+    : detected
+      ? `payload reconhecido (${detected.type})`
+      : 'aguardando entrada';
+
   return (
     <main className="container">
       <h1>Bitcoin Universal Recovery & Signing Hub</h1>
@@ -71,35 +79,42 @@ export function App() {
           Cole um payload para testar a detecção local (seed BIP39, xpub/ypub/zpub, PSBT, invoice
           Lightning ou endereço Bitcoin).
         </p>
+
+        <label className="input-label" htmlFor="payload-input">
+          Payload de teste
+        </label>
         <textarea
+          id="payload-input"
           value={scannerInput}
           onChange={(event) => setScannerInput(event.target.value)}
           placeholder="Cole o payload lido do QR"
           rows={4}
         />
+
+        <p className="input-state">Estado da entrada: {isInputEmpty ? 'vazia' : 'preenchida'}</p>
+
         <div className="actions-row">
           <button type="button" onClick={handleManualClear}>
             Limpar payload da memória
           </button>
         </div>
 
-        <p className="detection-state">
-          Estado da detecção:{' '}
-          {errorMessage
-            ? 'erro no parsing'
-            : detected
-              ? `payload reconhecido (${detected.type})`
-              : 'aguardando entrada'}
-        </p>
+        <p className="detection-state">Estado da detecção: {detectionStateMessage}</p>
 
         {detected ? <p className="result">Tipo detectado: {detected.type}</p> : null}
         {detected && formatMetadata(detected) ? (
           <p className="metadata">{formatMetadata(detected)}</p>
         ) : null}
+        {detected?.type === 'lightning_invoice' ? (
+          <p className="experimental-notice">
+            Validação de Lightning invoice ainda heurística (baseada em prefixo), sujeita a falso
+            positivo em payload truncado.
+          </p>
+        ) : null}
         {autoClearedSensitiveData ? (
           <p className="sensitive-notice">
             Payload sensível detectado ({detected?.type}). O campo de entrada foi limpo
-            automaticamente.
+            automaticamente e os dados não são persistidos em storage local.
           </p>
         ) : null}
         {errorMessage ? <p className="error">{errorMessage}</p> : null}
