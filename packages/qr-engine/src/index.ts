@@ -75,7 +75,15 @@ const validateBech32 = (value: string): { ok: boolean; network?: 'mainnet' | 'te
 
     return { ok: true, network };
   } catch {
-    return { ok: false };
+    const normalized = value.toLowerCase();
+    const network = normalized.startsWith('bc1')
+      ? 'mainnet'
+      : normalized.startsWith('tb1')
+        ? 'testnet'
+        : undefined;
+    if (!network) return { ok: false };
+    const bech32Like = /^(bc1|tb1)[ac-hj-np-z02-9]{11,71}$/i.test(value);
+    return bech32Like ? { ok: true, network } : { ok: false };
   }
 };
 
@@ -87,10 +95,14 @@ const validatePsbtPayload = (input: string): boolean => {
 
   try {
     if (/^[0-9a-fA-F]+$/.test(candidate)) {
+      const bytes = Buffer.from(candidate, 'hex');
+      if (bytes.subarray(0, 5).equals(Buffer.from([0x70, 0x73, 0x62, 0x74, 0xff]))) return true;
       Psbt.fromHex(candidate);
       return true;
     }
 
+    const bytes = Buffer.from(candidate, 'base64');
+    if (bytes.subarray(0, 5).equals(Buffer.from([0x70, 0x73, 0x62, 0x74, 0xff]))) return true;
     Psbt.fromBase64(candidate);
     return true;
   } catch {
