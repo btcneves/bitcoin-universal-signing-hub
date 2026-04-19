@@ -198,13 +198,220 @@ const validatePsbtPayload = (input: string): boolean => {
     ? trimmed.slice('ur:crypto-psbt/'.length)
     : trimmed;
 
+  const readCompactSize = (
+    bytes: Uint8Array,
+    offset: number
+  ): { value: number; next: number } | undefined => {
+    const first = bytes[offset];
+    if (first === undefined) return undefined;
+    if (first < 0xfd) return { value: first, next: offset + 1 };
+
+    if (first === 0xfd) {
+      const b0 = bytes[offset + 1];
+      const b1 = bytes[offset + 2];
+      if (b0 === undefined || b1 === undefined) return undefined;
+      return { value: b0 | (b1 << 8), next: offset + 3 };
+    }
+
+    if (first === 0xfe) {
+      const b0 = bytes[offset + 1];
+      const b1 = bytes[offset + 2];
+      const b2 = bytes[offset + 3];
+      const b3 = bytes[offset + 4];
+      if (b0 === undefined || b1 === undefined || b2 === undefined || b3 === undefined) {
+        return undefined;
+      }
+      return { value: (b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)) >>> 0, next: offset + 5 };
+    }
+
+    const lo0 = bytes[offset + 1];
+    const lo1 = bytes[offset + 2];
+    const lo2 = bytes[offset + 3];
+    const lo3 = bytes[offset + 4];
+    const hi0 = bytes[offset + 5];
+    const hi1 = bytes[offset + 6];
+    const hi2 = bytes[offset + 7];
+    const hi3 = bytes[offset + 8];
+    if (
+      lo0 === undefined ||
+      lo1 === undefined ||
+      lo2 === undefined ||
+      lo3 === undefined ||
+      hi0 === undefined ||
+      hi1 === undefined ||
+      hi2 === undefined ||
+      hi3 === undefined
+    ) {
+      return undefined;
+    }
+
+    const low = BigInt((lo0 | (lo1 << 8) | (lo2 << 16) | (lo3 << 24)) >>> 0);
+    const high = BigInt((hi0 | (hi1 << 8) | (hi2 << 16) | (hi3 << 24)) >>> 0);
+    const combined = low | (high << 32n);
+    if (combined > BigInt(Number.MAX_SAFE_INTEGER)) return undefined;
+    return { value: Number(combined), next: offset + 9 };
+  };
+
+  const parseMap = (
+    bytes: Uint8Array,
+    offset: number
+  ): { next: number; entries: Map<number, Uint8Array[]> } | undefined => {
+    const entries = new Map<number, Uint8Array[]>();
+    let cursor = offset;
+
+    while (cursor < bytes.length) {
+      const keyLen = readCompactSize(bytes, cursor);
+      if (!keyLen) return undefined;
+      cursor = keyLen.next;
+
+      if (keyLen.value === 0) return { next: cursor, entries };
+
+      if (cursor + keyLen.value > bytes.length) return undefined;
+      const key = bytes.subarray(cursor, cursor + keyLen.value);
+      cursor += keyLen.value;
+
+      const valueLen = readCompactSize(bytes, cursor);
+      if (!valueLen) return undefined;
+      cursor = valueLen.next;
+
+      if (cursor + valueLen.value > bytes.length) return undefined;
+      const value = bytes.subarray(cursor, cursor + valueLen.value);
+      cursor += valueLen.value;
+
+      const keyType = key[0];
+      if (keyType === undefined) return undefined;
+      const existing = entries.get(keyType);
+      if (existing) existing.push(value);
+      else entries.set(keyType, [value]);
+    }
+
+    return undefined;
+  };
+
+  const parseLegacyTxInputOutputCounts = (
+    txBytes: Uint8Array
+  ): { inputCount: number; outputCount: number } | undefined => {
+    let cursor = 0;
+    if (txBytes.length < 10) return undefined;
+    cursor += 4; // version
+
+    const marker = txBytes[cursor];
+    const flag = txBytes[cursor + 1];
+    const hasWitness = marker === 0 && flag === 1;
+    if (hasWitness) cursor += 2;
+
+    const vinCount = readCompactSize(txBytes, cursor);
+    if (!vinCount) return undefined;
+    cursor = vinCount.next;
+    const inputCount = vinCount.value;
+
+    for (let i = 0; i < inputCount; i += 1) {
+      if (cursor + 36 > txBytes.length) return undefined;
+      cursor += 36;
+      const scriptLen = readCompactSize(txBytes, cursor);
+      if (!scriptLen) return undefined;
+      cursor = scriptLen.next;
+      if (cursor + scriptLen.value + 4 > txBytes.length) return undefined;
+      cursor += scriptLen.value + 4;
+    }
+
+    const voutCount = readCompactSize(txBytes, cursor);
+    if (!voutCount) return undefined;
+    cursor = voutCount.next;
+    const outputCount = voutCount.value;
+
+    for (let i = 0; i < outputCount; i += 1) {
+      if (cursor + 8 > txBytes.length) return undefined;
+      cursor += 8;
+      const scriptLen = readCompactSize(txBytes, cursor);
+      if (!scriptLen) return undefined;
+      cursor = scriptLen.next;
+      if (cursor + scriptLen.value > txBytes.length) return undefined;
+      cursor += scriptLen.value;
+    }
+
+    if (hasWitness) {
+      for (let i = 0; i < inputCount; i += 1) {
+        const witnessItems = readCompactSize(txBytes, cursor);
+        if (!witnessItems) return undefined;
+        cursor = witnessItems.next;
+        for (let j = 0; j < witnessItems.value; j += 1) {
+          const itemLen = readCompactSize(txBytes, cursor);
+          if (!itemLen) return undefined;
+          cursor = itemLen.next;
+          if (cursor + itemLen.value > txBytes.length) return undefined;
+          cursor += itemLen.value;
+        }
+      }
+    }
+
+    if (cursor + 4 !== txBytes.length) return undefined;
+    return { inputCount, outputCount };
+  };
+
+  const parseCompactSizeFromBytes = (value: Uint8Array): number | undefined => {
+    const result = readCompactSize(value, 0);
+    if (!result || result.next !== value.length) return undefined;
+    return result.value;
+  };
+
+  const isValidPsbtBytes = (bytes: Uint8Array): boolean => {
+    if (!startsWithBytes(bytes, PSBT_MAGIC_BYTES)) return false;
+    let cursor = PSBT_MAGIC_BYTES.length;
+
+    const globalMap = parseMap(bytes, cursor);
+    if (!globalMap) return false;
+    cursor = globalMap.next;
+
+    const unsignedTxValues = globalMap.entries.get(0x00);
+    const inputCountValues = globalMap.entries.get(0x04);
+    const outputCountValues = globalMap.entries.get(0x05);
+
+    let inputCount: number | undefined;
+    let outputCount: number | undefined;
+
+    if (unsignedTxValues && unsignedTxValues.length === 1) {
+      const [unsignedTxValue] = unsignedTxValues;
+      if (!unsignedTxValue) return false;
+      const parsedCounts = parseLegacyTxInputOutputCounts(unsignedTxValue);
+      if (!parsedCounts) return false;
+      inputCount = parsedCounts.inputCount;
+      outputCount = parsedCounts.outputCount;
+    } else {
+      if (!inputCountValues || inputCountValues.length !== 1) return false;
+      if (!outputCountValues || outputCountValues.length !== 1) return false;
+      const [inputCountValue] = inputCountValues;
+      const [outputCountValue] = outputCountValues;
+      if (!inputCountValue || !outputCountValue) return false;
+      inputCount = parseCompactSizeFromBytes(inputCountValue);
+      outputCount = parseCompactSizeFromBytes(outputCountValue);
+      if (inputCount === undefined || outputCount === undefined) return false;
+    }
+
+    for (let i = 0; i < inputCount; i += 1) {
+      const inputMap = parseMap(bytes, cursor);
+      if (!inputMap) return false;
+      cursor = inputMap.next;
+    }
+
+    for (let i = 0; i < outputCount; i += 1) {
+      const outputMap = parseMap(bytes, cursor);
+      if (!outputMap) return false;
+      cursor = outputMap.next;
+    }
+
+    return cursor === bytes.length;
+  };
+
+  let rawBytes: Uint8Array | undefined;
   if (/^[0-9a-fA-F]+$/.test(candidate) && candidate.length % 2 === 0) {
-    return startsWithBytes(hexToBytes(candidate), PSBT_MAGIC_BYTES);
+    rawBytes = hexToBytes(candidate);
+  } else {
+    rawBytes = decodeBase64(candidate);
   }
 
-  const decodedBase64 = decodeBase64(candidate);
-  if (!decodedBase64) return false;
-  return startsWithBytes(decodedBase64, PSBT_MAGIC_BYTES);
+  if (!rawBytes) return false;
+  return isValidPsbtBytes(rawBytes);
 };
 
 const validateBip39Mnemonic = (input: string): boolean => {
