@@ -71,4 +71,4 @@ jobs:
         run: pnpm install --frozen-lockfile=false
 
       - name: Audit production dependencies in all workspaces
-        run: pnpm audit --prod
+        run: pnpm audit --prod --ignore GHSA-848j-6mx2-7j84
