@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+
+if ! id -u bursh >/dev/null 2>&1; then
+  useradd -m -s /bin/bash bursh
+fi
+
+usermod -aG audio,video bursh
+mkdir -p /home/bursh/.config/openbox
+chown -R bursh:bursh /home/bursh

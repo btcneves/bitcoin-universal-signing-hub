@@ -23,11 +23,12 @@ Referência de execução: `docs/web-functional-checklist.md`.
 
 - integração real com assinador externo em cenário reproduzível;
 - critérios de release de segurança e funcionalidade para uso controlado.
+- Secure USB Edition: validar ISO em VM/hardware e aplicar hardening incremental (polkit/USB rules/read-only defaults).
 
 ### P3 — Expansão de plataforma (após gate funcional)
 
 - Android;
-- Secure USB.
+- Secure USB para release de produção (assinatura de imagem, cadeia de confiança e operação guiada).
 
 ## Itens explicitamente fora da etapa atual
 

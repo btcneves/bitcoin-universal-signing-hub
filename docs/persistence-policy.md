@@ -31,6 +31,15 @@ Reduzir risco de exposição de dados sensíveis em armazenamento local, logs e 
 3. Mensagens de erro devem ser genéricas e sem eco de payload sensível.
 4. Persistência futura de dados watch-only deve permanecer segregada de Zona 0.
 
+## Aplicação na Secure USB Edition (fundação v0)
+
+- RAM sensível: `/run/bursh-sensitive` (volatile, limpa a cada boot).
+- Persistência opcional não sensível: partição com label `BURSH-DATA`, montada em `/mnt/bursh-data`.
+- Diretórios permitidos de persistência quando `BURSH-DATA` existe:
+  - `/var/lib/bursh/watch-only`
+  - `/var/lib/bursh/config`
+- Qualquer dado fora da lista acima deve ser tratado como efêmero e não sensível.
+
 ## Limitações
 
 - Lint reduz risco, mas não substitui revisão de arquitetura e testes de segurança.

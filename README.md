@@ -44,7 +44,14 @@ Referências:
 - PSBT end-to-end (assinatura/finalização/transmissão reais). A UX pós-detecção local agora exibe painel de revisão offline + checkpoint local de revisão concluída + preparação local de encaminhamento (simulação offline) para assinatura externa futura, sem export real/assinatura/broadcast nesta fase
 - integração real com carteiras externas
 - app Android
-- pipeline Secure USB de produção
+- edição Secure USB bootável de produção (hardening e validação em hardware real ainda em andamento)
+
+### Secure USB Edition — fundação executável (abril/2026)
+
+- pipeline inicial reproduzível com Debian Live (`live-build`) em `infra/usb`;
+- build da ISO já integra bundle local do app web (`apps/web/dist`) e injeta no filesystem live;
+- boot com `systemd` iniciando servidor local do app + Chromium em modo kiosk/fullscreen;
+- política de sessão sensível em RAM (`/run/bursh-sensitive`) e persistência opcional apenas para não sensíveis (`/var/lib/bursh/watch-only` e `/var/lib/bursh/config`, via partição `BURSH-DATA`).
 
 ### Validação funcional desta fase
 
@@ -77,6 +84,7 @@ Referências:
 - `apps/android`: espaço reservado/documental
 - `packages/*`: motores e módulos de domínio (bitcoin, psbt, qr, lightning, segurança, tipos)
 - `docs/`: documentação de arquitetura, políticas, status e roadmap
+- `infra/usb`: fundação executável da Secure USB Edition (Debian Live + kiosk)
 
 ## Como rodar localmente
 
@@ -120,6 +128,8 @@ Veja opções com Docker, Dev Container e bootstrap npm em `docs/reproducibility
 - `pnpm build`
 - `pnpm dev`
 - `pnpm audit --prod --ignore GHSA-848j-6mx2-7j84`
+- `pnpm usb:prepare-web`
+- `pnpm usb:build-iso`
 
 ## Validação e governança técnica
 

@@ -1,0 +1,13 @@
+[Unit]
+Description=Initialize BURSH storage policy (RAM sensitive + optional persistent non-sensitive)
+DefaultDependencies=no
+After=local-fs.target
+Before=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/init-bursh-storage.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
