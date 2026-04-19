@@ -6,9 +6,10 @@ Este guia complementa a checklist funcional e descreve o comportamento esperado 
 
 ## Atualização pós rodadas manuais parciais (2026-04-19)
 
-- Esta matriz incorpora evidência real das rodadas manuais parciais 1 e 2.
+- Esta matriz incorpora evidência real das rodadas manuais parciais 1, 2 e 3.
 - Bugs reais observados e corrigidos durante a rodada 1: falso positivo para PSBT truncada e falso positivo para endereço Bech32 inválido.
 - Na rodada 2, não surgiram bugs novos e houve reforço de estabilidade em transições rápidas de estado.
+- Na rodada 3 (parcial), não surgiram bugs novos; houve reforço de robustez em payloads inválidos “parecidos” e de consistência de estado/UI em sequências mistas e cenário offline local.
 - Caso `zpub` permanece inconclusivo quando testado com vetor não garantido; não classificar como bug sem vetor canônico.
 - Vetor Bech32 válido de referência para regressão: `bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4`.
 - O vetor `bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kygt080` não deve ser marcado como válido neste documento.
@@ -54,7 +55,7 @@ Este guia complementa a checklist funcional e descreve o comportamento esperado 
 
 ## Resumo de maturidade atual
 
-- **Estável com boa evidência manual**: Fluxos A (exceto A05 pendente de reforço), B01-B06, B09-B10 e transições rápidas de estado validadas na rodada 2.
+- **Estável com boa evidência manual**: Fluxos A (exceto A05 pendente de reforço), B01-B06, B09-B10 e transições rápidas de estado validadas/revalidadas nas rodadas 2 e 3.
 - **Heurístico/experimental**: WF-B07, WF-B08, WF-B11, WF-C02.
 - **Inconclusivo por vetor não garantido**: `zpub` em WF-B01 (não tratar como bug sem vetor confiável).
 - **Fora do escopo desta fase**: watch-only completo, assinatura externa real, QR avançado ponta-a-ponta.

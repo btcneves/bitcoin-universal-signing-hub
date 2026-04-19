@@ -18,6 +18,11 @@ Objetivo: executar validação funcional manual real do `apps/web` com evidênci
 
 - Evidência real já confirmou passagens dos casos: WF-A01, WF-A02, WF-A03, WF-A04 (incluindo limpeza após auto-clear), WF-B01 (xpub/ypub), WF-B02, WF-B03, WF-B04, WF-B05, WF-B06, WF-B07, WF-B08, WF-B09, WF-B10, WF-B11 e verificação offline básica relacionada ao WF-C02.
 - Evidência da rodada 2 reforçou estabilidade de transições rápidas (`xpub -> ypub -> lixo`) e transições `não sensível -> sensível` sem metadado residual.
+- Evidência da rodada 3 parcial reforçou:
+  - `ypub` válido com estado estável/mainnet;
+  - rejeição correta de payloads inválidos “parecidos” (`cHNidP8BAA`, `bc9...`, `lnxyz123`) como `unknown`;
+  - consistência de estado nas sequências `teste123 -> xpub válido -> seed válida` e `lnbc1testinvoice123 -> teste123 -> limpar`;
+  - continuidade coerente em cenário offline mais rico (local-only).
 - Caso `zpub` permanece **inconclusivo** por ausência de vetor garantido na execução manual parcial.
 - Para Bech32 válido canônico, usar explicitamente: `bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4`.
 - O vetor `bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kygt080` não deve ser tratado como “válido” nesta checklist.
@@ -79,4 +84,4 @@ Objetivo: executar validação funcional manual real do `apps/web` com evidênci
 1. Casos WF-A01..WF-C02 executados com evidência mínima.
 2. Falhas relevantes registradas em issue com reprodução clara.
 3. Priorização de bugs funcionais refletida no fluxo `docs/web-bug-reporting-flow.md` e no status do projeto.
-4. Rodada 3 deve priorizar apenas casos ainda sem cobertura robusta (ex.: `zpub` garantido, rede/testnet adicional, offline menos trivial).
+4. Próxima rodada deve priorizar apenas casos ainda sem cobertura robusta (ex.: `zpub` garantido, rede/testnet adicional, watch-only/PSBT mais profundos e UX de erro acionável).

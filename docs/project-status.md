@@ -8,7 +8,8 @@ Atualizado em: **2026-04-19**.
 - **Rodadas manuais parciais executadas em 2026-04-19**:
   - rodada 1: encontrou bugs reais e acionáveis (falso positivo de Bech32 inválido e falso positivo de PSBT truncada), já corrigidos;
   - rodada 2: consolidou evidência de robustez sem novos bugs.
-- **Estado atual**: detector e UI mostram consistência maior com evidência manual real em transições rápidas e payloads inválidos “parecidos”.
+- rodada 3 (parcial): reforçou consistência de estado/UI, robustez contra payloads inválidos “parecidos” e continuidade offline local, sem bugs novos.
+- **Estado atual**: detector e UI mantêm consistência forte com evidência manual real acumulada nas rodadas 1, 2 e 3.
 - **Próxima etapa oficial**: rodada funcional focada nas lacunas ainda não cobertas (evitar repetir casos já estáveis).
 - **Regra de origem de bug nesta fase**: issue funcional deve nascer de execução documentada (não de especulação).
 
@@ -31,7 +32,12 @@ Atualizado em: **2026-04-19**.
 - transições de estado recentemente confirmadas na rodada 2:
   - `xpub -> ypub -> inválido` sem estado preso;
   - `não sensível -> sensível` com limpeza correta e sem metadado residual;
-  - payloads inválidos semelhantes a PSBT/Lightning/address retornando `unknown`.
+  - payloads inválidos semelhantes a PSBT/Lightning/address retornando `unknown`;
+- reforço de evidência na rodada 3:
+  - `ypub` válido com classificação estável e rede mainnet;
+  - `cHNidP8BAA`, `bc9...` e `lnxyz123` mantidos como `unknown`;
+  - sequências com limpeza/manual e auto-clear sem metadado residual;
+  - coerência de fluxos locais em cenário offline mais completo.
 
 ### Parcial / experimental (existe estrutura, sem validação funcional fim a fim)
 
@@ -75,11 +81,11 @@ Atualizado em: **2026-04-19**.
 4. **Monorepo por módulos de domínio**  
    Justificativa: clareza de fronteiras e evolução incremental por pacote.
 
-## 4) Próxima fase prática (rodada 3 funcional focada)
+## 4) Próxima fase prática (rodada 4 funcional focada em lacunas reais)
 
-### P0 — consolidar evidência das rodadas 1 e 2
+### P0 — consolidar evidência das rodadas 1, 2 e 3
 
-1. manter registros objetivos das rodadas em `docs/web-manual-validation-round-1.md` e `docs/web-manual-validation-round-2.md`;
+1. manter registros objetivos das rodadas em `docs/web-manual-validation-round-1.md`, `docs/web-manual-validation-round-2.md` e `docs/web-manual-validation-round-3.md`;
 2. preservar rastreabilidade dos bugs reais já corrigidos da rodada 1;
 3. refletir no checklist/expected-results os casos estáveis já validados e os inconclusivos.
 
@@ -87,8 +93,8 @@ Atualizado em: **2026-04-19**.
 
 1. `zpub` com vetor garantido (positivo + negativo);
 2. casos adicionais de rede/testnet (address e extended pubkeys);
-3. offline menos trivial em sequência de interações locais;
-4. watch-only mais profundo (sem integração completa externa);
+3. watch-only mais profundo (além da detecção, sem integração completa externa);
+4. offline menos trivial em sequência de interações locais com foco em regressão funcional;
 5. UX de erro e feedback com foco em mensagens acionáveis;
 6. PSBT adicional (quase-válidas, limítrofes e comportamento de orientação na UI).
 
@@ -111,4 +117,4 @@ Atualizado em: **2026-04-19**.
 
 ## 7) Critério para avanço de fase
 
-A expansão da próxima fase de produto avança com evidência reproduzível incremental da validação funcional web, com foco explícito nas lacunas restantes após as rodadas manuais parciais 1 e 2.
+A expansão da próxima fase de produto avança com evidência reproduzível incremental da validação funcional web, com foco explícito nas lacunas restantes após as rodadas manuais parciais 1, 2 e 3.
