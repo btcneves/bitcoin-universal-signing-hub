@@ -46,6 +46,12 @@ Referências:
 - app Android
 - pipeline Secure USB de produção
 
+### Validação funcional desta fase
+
+- checklist manual de validação web: `docs/web-functional-checklist.md`
+- status funcional consolidado: `docs/project-status.md`
+- prioridades da próxima fase: `docs/roadmap.md`
+
 ### Riscos e exceções atuais
 
 - advisory ignorado no audit: `GHSA-848j-6mx2-7j84` (exceção temporária documentada)

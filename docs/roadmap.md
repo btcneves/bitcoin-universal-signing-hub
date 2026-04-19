@@ -1,28 +1,35 @@
 # Roadmap
 
-Roadmap resumido para a próxima fase do produto após estabilização técnica inicial.
+Roadmap prático para evoluir o produto após estabilização técnica inicial.
 
-## Fase 1 — Validação funcional real (prioridade)
+## Fase atual — Validação funcional web (gate obrigatório)
 
-- validar scanner/QR em cenário real (câmera, iluminação, ruído e payloads variados);
-- fechar fluxo watch-only completo com UX consistente;
-- validar PSBT end-to-end com carteiras/signer externos reais;
-- formalizar matriz de compatibilidade de integrações prioritárias.
+Referência de execução: `docs/web-functional-checklist.md`.
 
-## Fase 2 — Segurança aplicada e hardening
+### P0 — Obrigatório agora
 
-- reforçar cobertura de redaction e telemetria segura em todo fluxo;
-- ampliar testes adversariais (payloads malformados e inputs hostis);
-- consolidar critérios de release para execução segura em ambiente operacional.
+- executar checklist funcional completo no app local e registrar evidências;
+- classificar cada fluxo como funcional, parcial ou não implementado;
+- abrir issues objetivas para cada falha encontrada com payload de reprodução.
 
-## Fase 3 — Expansão de plataformas
+### P1 — Próxima entrega de produto (curto prazo)
 
-- evoluir trilha Android com mesmos requisitos de segurança e validação;
-- amadurecer pipeline Secure USB com foco em reprodutibilidade e cadeia de confiança;
-- preparar base para transição de “projeto validado” para “produto operacional”.
+- refinamento do fluxo QR/payload detection (entrada, feedback e robustez);
+- watch-only real com UX navegável e resultado utilizável;
+- PSBT UX e roundtrip local com integração externa mínima validada.
+
+### P2 — Consolidação operacional
+
+- integração real com assinador externo em cenário reproduzível;
+- critérios de release de segurança e funcionalidade para uso controlado.
+
+### P3 — Expansão de plataforma (após gate funcional)
+
+- Android;
+- Secure USB.
 
 ## Itens explicitamente fora da etapa atual
 
-- novas features de produto sem validação funcional da base;
-- refactors amplos sem ganho direto de clareza/segurança;
-- avanço de Android/USB sem critérios mínimos da Fase 1 atendidos.
+- novas features grandes fora do escopo de validação funcional;
+- refactors amplos sem ganho direto de validação/clareza;
+- avanço de Android/USB antes de conclusão do gate funcional web.
