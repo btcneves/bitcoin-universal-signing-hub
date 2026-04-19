@@ -15,7 +15,7 @@ Referência de execução: `docs/web-functional-checklist.md`.
 ### P1 — Próxima entrega de produto (curto prazo)
 
 - refinamento do fluxo QR/payload detection (entrada, feedback e robustez);
-- watch-only real com UX navegável e resultado utilizável;
+- watch-only local pós-detecção já disponível em MVP; próximo passo é evoluir para UX navegável com resultado utilizável;
 - PSBT UX e roundtrip local com integração externa mínima validada.
 
 ### P2 — Consolidação operacional

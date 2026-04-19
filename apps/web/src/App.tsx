@@ -12,12 +12,24 @@ const SAMPLE_HINTS = [
   'Inválido (controle): texto-livre-123 sem formato conhecido'
 ];
 
+const WATCH_ONLY_TYPES = new Set<ParsedQRPayload['type']>(['xpub', 'ypub', 'zpub']);
+const isWatchOnlyType = (type: ParsedQRPayload['type']): type is 'xpub' | 'ypub' | 'zpub' =>
+  WATCH_ONLY_TYPES.has(type);
+
 export type DetectionSnapshot = {
   scannerInput: string;
   errorMessage?: string;
   detected?: ParsedQRPayload;
   autoClearedSensitiveData: boolean;
   lastActionMessage?: string;
+};
+
+export type WatchOnlySnapshot = {
+  ready: boolean;
+  keyType?: 'xpub' | 'ypub' | 'zpub';
+  network?: 'mainnet' | 'testnet';
+  accountModel?: string;
+  uiStateMessage?: string;
 };
 
 const toUiError = (error: unknown): string => {
@@ -49,6 +61,30 @@ const getDetectionMaturity = (type?: ParsedQRPayload['type']): string => {
   }
 
   return 'estável';
+};
+
+const getWatchOnlyAccountModel = (type: 'xpub' | 'ypub' | 'zpub'): string => {
+  if (type === 'xpub') return 'legado/compatível (xpub)';
+  if (type === 'ypub') return 'segwit aninhado (P2WPKH-in-P2SH)';
+  return 'segwit nativo (P2WPKH)';
+};
+
+export const buildWatchOnlySnapshot = (detected?: ParsedQRPayload): WatchOnlySnapshot => {
+  if (!detected || !isWatchOnlyType(detected.type)) {
+    return { ready: false, uiStateMessage: 'Watch-only indisponível para o payload atual.' };
+  }
+
+  const keyType = detected.type;
+  const network = detected.metadata?.network;
+  const normalizedNetwork = network === 'testnet' ? 'testnet' : 'mainnet';
+
+  return {
+    ready: true,
+    keyType,
+    network: normalizedNetwork,
+    accountModel: getWatchOnlyAccountModel(keyType),
+    uiStateMessage: 'Watch-only pronto para revisão offline da carteira.'
+  };
 };
 
 export const buildManualClearSnapshot = (scannerInput: string): DetectionSnapshot => {
@@ -132,6 +168,7 @@ export function App() {
 
   const detectedType = detected?.type;
   const detectionMaturity = getDetectionMaturity(detectedType);
+  const watchOnly = buildWatchOnlySnapshot(detected);
 
   return (
     <main className="container">
@@ -197,6 +234,24 @@ export function App() {
           </p>
         ) : null}
         {errorMessage ? <p className="error">{errorMessage}</p> : null}
+
+        {watchOnly.ready ? (
+          <section className="watch-only-panel">
+            <h3>Watch-only pronto (MVP local)</h3>
+            <p className="watch-only-state">Estado: {watchOnly.uiStateMessage}</p>
+            <ul>
+              <li>Tipo de extended pubkey: {watchOnly.keyType}</li>
+              <li>Rede detectada: {watchOnly.network}</li>
+              <li>Modelo de conta esperado: {watchOnly.accountModel}</li>
+            </ul>
+            <p className="watch-only-next-step-title">Próximos passos sugeridos:</p>
+            <ol>
+              <li>Confirmar se a rede e o tipo de chave batem com a carteira de origem.</li>
+              <li>Validar o propósito da conta antes de importar em um visualizador watch-only.</li>
+              <li>Prosseguir sem inserir seed, passphrase ou qualquer material sensível.</li>
+            </ol>
+          </section>
+        ) : null}
       </section>
 
       <HomeActions />

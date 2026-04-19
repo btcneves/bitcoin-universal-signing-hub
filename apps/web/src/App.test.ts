@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { Bip84WalletService } from '@bursh/bitcoin-engine';
 import { UniversalQrService } from '@bursh/qr-engine';
-import { buildDetectionSnapshot, buildManualClearSnapshot } from './App';
+import { buildDetectionSnapshot, buildManualClearSnapshot, buildWatchOnlySnapshot } from './App';
 
 const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 const map = new Map([...alphabet].map((c, i) => [c, i]));
@@ -121,5 +121,29 @@ describe('app flow regressions', () => {
     expect(clearAlreadyEmpty.lastActionMessage).toBe('Área de teste já estava limpa.');
     expect(clearAlreadyEmpty.detected).toBeUndefined();
     expect(clearAlreadyEmpty.errorMessage).toBeUndefined();
+  });
+
+  it('gera estado watch-only pronto para xpub/ypub e ignora entradas inválidas', () => {
+    const xpubDetected = buildDetectionSnapshot(parser, validXpub)?.detected;
+    const xpubWatchOnly = buildWatchOnlySnapshot(xpubDetected);
+    expect(xpubWatchOnly.ready).toBe(true);
+    expect(xpubWatchOnly.keyType).toBe('xpub');
+    expect(xpubWatchOnly.network).toBe('mainnet');
+    expect(xpubWatchOnly.accountModel).toContain('xpub');
+    expect(xpubWatchOnly.uiStateMessage).toContain('pronto');
+
+    const ypubDetected = buildDetectionSnapshot(parser, validYpub)?.detected;
+    const ypubWatchOnly = buildWatchOnlySnapshot(ypubDetected);
+    expect(ypubWatchOnly.ready).toBe(true);
+    expect(ypubWatchOnly.keyType).toBe('ypub');
+    expect(ypubWatchOnly.network).toBe('mainnet');
+    expect(ypubWatchOnly.accountModel).toContain('segwit aninhado');
+    expect(ypubWatchOnly.uiStateMessage).toContain('pronto');
+
+    const invalidDetected = buildDetectionSnapshot(parser, 'xpub-lixo-123')?.detected;
+    const invalidWatchOnly = buildWatchOnlySnapshot(invalidDetected);
+    expect(invalidDetected?.type).toBe('unknown');
+    expect(invalidWatchOnly.ready).toBe(false);
+    expect(invalidWatchOnly.uiStateMessage).toContain('indisponível');
   });
 });
