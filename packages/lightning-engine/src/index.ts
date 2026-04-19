@@ -2,7 +2,7 @@ import { decode } from 'bolt11';
 import type { LightningService } from '@bursh/core-domain';
 import type { LightningInvoice } from '@bursh/shared-types';
 
-const msatToSat = (millisatoshis?: string): number | undefined => {
+const msatToSat = (millisatoshis?: string | null): number | undefined => {
   if (!millisatoshis) return undefined;
   const msat = Number(millisatoshis);
   if (!Number.isFinite(msat)) return undefined;
@@ -21,11 +21,15 @@ export class Bolt11ParserService implements LightningService {
     const descriptionTag = decoded.tags.find((tag) => tag.tagName === 'description');
     const expiryTag = decoded.tags.find((tag) => tag.tagName === 'expire_time');
 
+    const amountSats = msatToSat(decoded.millisatoshis);
+    const description = typeof descriptionTag?.data === 'string' ? descriptionTag.data : undefined;
+    const expiry = typeof expiryTag?.data === 'number' ? expiryTag.data : 3600;
+
     return {
       raw: invoice,
-      amountSats: msatToSat(decoded.millisatoshis),
-      description: typeof descriptionTag?.data === 'string' ? descriptionTag.data : undefined,
-      expiry: typeof expiryTag?.data === 'number' ? expiryTag.data : 3600
+      expiry,
+      ...(amountSats === undefined ? {} : { amountSats }),
+      ...(description === undefined ? {} : { description })
     };
   }
 }
