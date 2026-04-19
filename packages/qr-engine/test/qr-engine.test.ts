@@ -57,6 +57,20 @@ describe('QR parser', () => {
     expect(parser.detectPayload(invalidMnemonic).type).toBe('unknown');
   });
 
+  it('mantém detecção de xpub com whitespace periférico', () => {
+    const wallet = new Bip84WalletService();
+    const descriptor = wallet.deriveBip84Wallet(new Uint8Array(64).fill(3));
+
+    expect(
+      parser.detectPayload(`  ${descriptor.accountXpub}
+`).type
+    ).toBe('xpub');
+  });
+
+  it('não aceita prefixos válidos com conteúdo lixo', () => {
+    expect(parser.detectPayload('xpub-lixo-123').type).toBe('unknown');
+    expect(parser.detectPayload('ypub-lixo-123').type).toBe('unknown');
+  });
   it('detecta xpub/ypub/zpub', () => {
     const wallet = new Bip84WalletService();
     const descriptor = wallet.deriveBip84Wallet(new Uint8Array(64).fill(1));
