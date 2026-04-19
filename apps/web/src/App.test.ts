@@ -5,6 +5,7 @@ import { UniversalQrService } from '@bursh/qr-engine';
 import {
   buildDetectionSnapshot,
   buildManualClearSnapshot,
+  buildPsbtReviewSnapshot,
   buildWatchOnlyPreparationSnapshot,
   buildWatchOnlySnapshot
 } from './App';
@@ -179,5 +180,50 @@ describe('app flow regressions', () => {
     );
     expect(unavailable.prepared).toBe(false);
     expect(unavailable.statusLabel).toContain('Não preparado');
+  });
+
+  it('exibe estado de revisão PSBT após detecção válida e convive com auto-clear', () => {
+    const validPsbt =
+      'cHNidP8BADwCAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////wD/////AQAAAAAAAAAAAAAAAAAAAAA=';
+    const psbtDetection = buildDetectionSnapshot(parser, validPsbt);
+
+    expect(psbtDetection?.detected?.type).toBe('psbt');
+    expect(psbtDetection?.autoClearedSensitiveData).toBe(true);
+    expect(psbtDetection?.scannerInput).toBe('');
+
+    const review = buildPsbtReviewSnapshot(
+      psbtDetection?.detected,
+      psbtDetection?.autoClearedSensitiveData
+    );
+    expect(review.ready).toBe(true);
+    expect(review.statusLabel).toContain('revisão offline');
+    expect(review.detectedFormat).toBe('base64');
+    expect(review.payloadSizeBytes).toBeGreaterThan(0);
+    expect(review.inputCount).toBe(1);
+    expect(review.outputCount).toBe(1);
+    expect(review.guidance).toContain('não há assinatura nem broadcast');
+  });
+
+  it('não habilita painel PSBT para payload truncada/inválida e mantém isolamento sensível', () => {
+    const truncatedPsbt = 'cHNidP8BAHECAAAAAQAAAAAAAAAAAAAAAAAAAA';
+    const truncatedDetection = buildDetectionSnapshot(parser, truncatedPsbt);
+    expect(truncatedDetection?.detected?.type).toBe('unknown');
+
+    const noPsbtPanel = buildPsbtReviewSnapshot(truncatedDetection?.detected, false);
+    expect(noPsbtPanel.ready).toBe(false);
+    expect(noPsbtPanel.statusLabel).toContain('indisponível');
+
+    const xpubDetection = buildDetectionSnapshot(parser, validXpub);
+    const xpubWatchOnly = buildWatchOnlySnapshot(xpubDetection?.detected);
+    expect(xpubWatchOnly.ready).toBe(true);
+
+    const seedDetection = buildDetectionSnapshot(
+      parser,
+      'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+    );
+    expect(seedDetection?.detected?.type).toBe('bip39');
+    expect(seedDetection?.autoClearedSensitiveData).toBe(true);
+    expect(buildWatchOnlySnapshot(seedDetection?.detected).ready).toBe(false);
+    expect(buildPsbtReviewSnapshot(seedDetection?.detected, true).ready).toBe(false);
   });
 });

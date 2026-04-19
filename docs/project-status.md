@@ -44,6 +44,10 @@ Atualizado em: **2026-04-19**.
   - prévia local sem rede (descriptor redigido + caminhos iniciais de recebimento/troco);
   - transição para estado “watch-only preparado (local)” sem misturar com fluxo sensível;
   - próximos passos de uso sem misturar com fluxo sensível.
+- MVP de UX pós-detecção de PSBT:
+  - estado explícito de “PSBT pronta para revisão offline” mantendo auto-clear sensível;
+  - painel local com formato detectado, tamanho, fingerprint curta e resumo técnico da unsigned tx (versão e contagem de entradas/saídas quando disponível);
+  - orientação objetiva de próximos passos sem assinatura, sem broadcast e sem integração externa nesta etapa.
 
 ### Parcial / experimental (existe estrutura, sem validação funcional fim a fim)
 
@@ -98,7 +102,7 @@ Atualizado em: **2026-04-19**.
 ### 4.2 Lacunas reais restantes (priorizadas, sem abrir escopo)
 
 - **P1**: watch-only além da detecção (fluxo guiado curto, com resultado útil local).
-- **P1**: UX pós-detecção para payload sensível/PSBT (mensagem acionável de próximos passos e falhas comuns).
+- **P1**: UX pós-detecção para payload sensível/PSBT (mensagem acionável de próximos passos e falhas comuns) **concluída no MVP local**; pendente integração de roundtrip externo controlado.
 - **P2**: vetores canônicos faltantes para `zpub` e casos testnet confiáveis (positivo + negativo).
 - **P2**: casos PSBT limítrofes com estados/falhas mais ricos e expectativa explícita.
 - **P3**: QR scan real por câmera e fluxo signer externo real (após fechar P1/P2).
@@ -112,15 +116,15 @@ Atualizado em: **2026-04-19**.
 
 ### 4.4 Próxima entrega concreta recomendada no repositório
 
-**Entrega escolhida agora:** _watch-only local aprofundado pós-detecção de extended pubkey._
+**Entrega escolhida agora:** _UX pós-detecção de PSBT (MVP local) após consolidação watch-only._
 
 Escopo objetivo desta entrega:
 
-1. preservar estado explícito de prontidão watch-only quando houver `xpub` / `ypub` / `zpub`;
-2. aprofundar resumo local acionável (script policy, escopo de derivação e prévia de descriptor/caminhos sem rede);
-3. permitir avanço para estado local “watch-only preparado”;
-4. cobrir em testes automatizados o estado watch-only para `xpub`, `ypub`, payload inválido e novos feedbacks de preparação;
-5. manter fora desta entrega: Android, Secure USB, rede/sync real, QR câmera real e signer externo real.
+1. preservar detecção de PSBT válida e rejeição de PSBT truncada/quase-PSBT;
+2. expor painel local de revisão offline com feedback explícito do que foi reconhecido;
+3. manter auto-clear sensível e isolamento do fluxo sensível;
+4. cobrir em testes automatizados o novo estado/painel PSBT e coexistência com regressões já cobertas;
+5. manter fora desta entrega: Android, Secure USB, assinatura real, broadcast real, integração externa ponta-a-ponta.
 
 ## 5) Riscos técnicos ainda abertos
 

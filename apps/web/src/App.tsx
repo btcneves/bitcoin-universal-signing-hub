@@ -43,6 +43,18 @@ export type WatchOnlyPreparationSnapshot = {
   guidance: string;
 };
 
+export type PsbtReviewSnapshot = {
+  ready: boolean;
+  statusLabel: string;
+  guidance: string;
+  detectedFormat?: 'base64' | 'ur:crypto-psbt';
+  payloadSizeBytes?: number;
+  txVersion?: number;
+  inputCount?: number;
+  outputCount?: number;
+  fingerprint?: string;
+};
+
 const toUiError = (error: unknown): string => {
   if (error instanceof Error) {
     return `Falha ao processar payload (${error.name}). Revise formato e conteúdo do texto colado.`;
@@ -102,6 +114,159 @@ const buildDescriptorPreview = (type: 'xpub' | 'ypub' | 'zpub', raw: string): st
 const buildKeyFingerprint = (raw: string): string => {
   if (raw.length <= 14) return raw;
   return `${raw.slice(0, 7)}...${raw.slice(-7)}`;
+};
+
+const decodeBase64ToBytes = (value: string): Uint8Array | undefined => {
+  try {
+    const normalized = value.replace(/\s+/g, '');
+    const binary = atob(normalized);
+    const out = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) {
+      out[i] = binary.charCodeAt(i);
+    }
+    return out;
+  } catch {
+    return undefined;
+  }
+};
+
+const readCompactSize = (
+  bytes: Uint8Array,
+  offset: number
+): { value: number; next: number } | undefined => {
+  const first = bytes[offset];
+  if (first === undefined) return undefined;
+  if (first < 0xfd) return { value: first, next: offset + 1 };
+
+  if (first === 0xfd) {
+    const b0 = bytes[offset + 1];
+    const b1 = bytes[offset + 2];
+    if (b0 === undefined || b1 === undefined) return undefined;
+    return { value: b0 | (b1 << 8), next: offset + 3 };
+  }
+
+  if (first === 0xfe) {
+    const b0 = bytes[offset + 1];
+    const b1 = bytes[offset + 2];
+    const b2 = bytes[offset + 3];
+    const b3 = bytes[offset + 4];
+    if (b0 === undefined || b1 === undefined || b2 === undefined || b3 === undefined) {
+      return undefined;
+    }
+    return { value: (b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)) >>> 0, next: offset + 5 };
+  }
+
+  return undefined;
+};
+
+const parsePsbtGlobalMap = (
+  bytes: Uint8Array
+): { next: number; unsignedTx?: Uint8Array } | undefined => {
+  let cursor = 5;
+
+  while (cursor < bytes.length) {
+    const keyLen = readCompactSize(bytes, cursor);
+    if (!keyLen) return undefined;
+    cursor = keyLen.next;
+
+    if (keyLen.value === 0) {
+      return { next: cursor };
+    }
+
+    if (cursor + keyLen.value > bytes.length) return undefined;
+    const key = bytes.subarray(cursor, cursor + keyLen.value);
+    cursor += keyLen.value;
+
+    const valueLen = readCompactSize(bytes, cursor);
+    if (!valueLen) return undefined;
+    cursor = valueLen.next;
+
+    if (cursor + valueLen.value > bytes.length) return undefined;
+    const value = bytes.subarray(cursor, cursor + valueLen.value);
+    cursor += valueLen.value;
+
+    if (key.length > 0 && key[0] === 0x00) {
+      return { next: cursor, unsignedTx: value };
+    }
+  }
+
+  return undefined;
+};
+
+const parseUnsignedTxSummary = (
+  tx: Uint8Array
+): { txVersion?: number; inputCount?: number; outputCount?: number } => {
+  if (tx.length < 8) return {};
+
+  const view = new DataView(tx.buffer, tx.byteOffset, tx.byteLength);
+  const txVersion = view.getUint32(0, true);
+  let cursor = 4;
+
+  const inputCountVarint = readCompactSize(tx, cursor);
+  if (!inputCountVarint) return { txVersion };
+  const inputCount = inputCountVarint.value;
+  cursor = inputCountVarint.next;
+
+  for (let i = 0; i < inputCount; i += 1) {
+    if (cursor + 36 > tx.length) return { txVersion, inputCount };
+    cursor += 36;
+
+    const scriptLen = readCompactSize(tx, cursor);
+    if (!scriptLen) return { txVersion, inputCount };
+    cursor = scriptLen.next;
+
+    if (cursor + scriptLen.value + 4 > tx.length) return { txVersion, inputCount };
+    cursor += scriptLen.value + 4;
+  }
+
+  const outputCountVarint = readCompactSize(tx, cursor);
+  if (!outputCountVarint) return { txVersion, inputCount };
+
+  return { txVersion, inputCount, outputCount: outputCountVarint.value };
+};
+
+const toHexPreview = (bytes: Uint8Array): string => {
+  const hex = [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+  if (hex.length <= 16) return hex;
+  return `${hex.slice(0, 8)}...${hex.slice(-8)}`;
+};
+
+export const buildPsbtReviewSnapshot = (
+  detected?: ParsedQRPayload,
+  autoClearedSensitiveData = false
+): PsbtReviewSnapshot => {
+  if (!detected || detected.type !== 'psbt') {
+    return {
+      ready: false,
+      statusLabel: 'PSBT indisponível',
+      guidance: 'Carregue uma PSBT válida para habilitar revisão offline local.'
+    };
+  }
+
+  const isUrFormat = detected.raw.trim().startsWith('ur:crypto-psbt/');
+  const encoded = isUrFormat ? detected.raw.trim().slice('ur:crypto-psbt/'.length) : detected.raw;
+  const decoded = decodeBase64ToBytes(encoded);
+  const globalMap = decoded ? parsePsbtGlobalMap(decoded) : undefined;
+  const txSummary = globalMap?.unsignedTx ? parseUnsignedTxSummary(globalMap.unsignedTx) : {};
+  const snapshot: PsbtReviewSnapshot = {
+    ready: true,
+    statusLabel: autoClearedSensitiveData
+      ? 'PSBT pronta para revisão offline'
+      : 'PSBT detectada para revisão local',
+    guidance:
+      'Revise resumo local e prossiga para assinatura externa apenas na etapa seguinte. Nesta fase não há assinatura nem broadcast.',
+    detectedFormat: isUrFormat ? 'ur:crypto-psbt' : 'base64'
+  };
+
+  if (decoded) {
+    snapshot.payloadSizeBytes = decoded.length;
+    snapshot.fingerprint = toHexPreview(decoded.subarray(0, 8));
+  }
+  if (txSummary.txVersion !== undefined) snapshot.txVersion = txSummary.txVersion;
+  if (txSummary.inputCount !== undefined) snapshot.inputCount = txSummary.inputCount;
+  if (txSummary.outputCount !== undefined) snapshot.outputCount = txSummary.outputCount;
+
+  return snapshot;
 };
 
 export const buildWatchOnlySnapshot = (detected?: ParsedQRPayload): WatchOnlySnapshot => {
@@ -240,6 +405,7 @@ export function App() {
   const detectionMaturity = getDetectionMaturity(detectedType);
   const watchOnly = buildWatchOnlySnapshot(detected);
   const watchOnlyPreparation = buildWatchOnlyPreparationSnapshot(watchOnly, watchOnlyPrepared);
+  const psbtReview = buildPsbtReviewSnapshot(detected, autoClearedSensitiveData);
 
   useEffect(() => {
     setWatchOnlyPrepared(false);
@@ -343,6 +509,28 @@ export function App() {
                 Prosseguir sem inserir seed, passphrase, PSBT ou qualquer material sensível neste
                 fluxo.
               </li>
+            </ol>
+          </section>
+        ) : null}
+
+        {psbtReview.ready ? (
+          <section className="psbt-panel">
+            <h3>PSBT pronta para revisão offline (MVP local)</h3>
+            <p className="psbt-state">Estado: {psbtReview.statusLabel}</p>
+            <ul>
+              <li>Formato detectado: {psbtReview.detectedFormat}</li>
+              <li>Tamanho do payload decodificado: {psbtReview.payloadSizeBytes ?? 'n/d'} bytes</li>
+              <li>Versão da transação unsigned: {psbtReview.txVersion ?? 'n/d'}</li>
+              <li>Entradas detectadas: {psbtReview.inputCount ?? 'n/d'}</li>
+              <li>Saídas detectadas: {psbtReview.outputCount ?? 'n/d'}</li>
+              <li>Fingerprint curta local: {psbtReview.fingerprint ?? 'n/d'}</li>
+            </ul>
+            <p className="psbt-guidance">{psbtReview.guidance}</p>
+            <p className="psbt-next-step-title">Próximos passos sugeridos:</p>
+            <ol>
+              <li>Comparar contagem de entradas/saídas com o contexto da transação esperada.</li>
+              <li>Exportar/encaminhar a PSBT para assinador externo em ambiente controlado.</li>
+              <li>Retornar com PSBT assinada para etapa futura de validação e finalização.</li>
             </ol>
           </section>
         ) : null}
