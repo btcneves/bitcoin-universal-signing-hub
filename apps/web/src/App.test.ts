@@ -8,6 +8,9 @@ import {
   buildPsbtForwardingSnapshot,
   buildPsbtHandoffSnapshot,
   buildPsbtReviewSnapshot,
+  getCameraSupportStatus,
+  resolveRequestedInputMode,
+  toCameraStartErrorMessage,
   buildWatchOnlyPreparationSnapshot,
   buildWatchOnlySnapshot,
   getDetectionMaturity
@@ -297,6 +300,59 @@ describe('app flow regressions', () => {
     const clearSnapshot = buildManualClearSnapshot('payload qualquer');
     expect(clearSnapshot.scannerInput).toBe('');
     expect(clearSnapshot.lastActionMessage).toContain('removido');
+  });
+
+  it('alterna entre manual e câmera com fallback previsível', () => {
+    expect(resolveRequestedInputMode('manual', 'supported')).toBe('manual');
+    expect(resolveRequestedInputMode('camera', 'supported')).toBe('camera');
+    expect(resolveRequestedInputMode('camera', 'missing-secure-context')).toBe('manual');
+    expect(resolveRequestedInputMode('camera', 'missing-barcode-detector')).toBe('manual');
+    expect(resolveRequestedInputMode('camera', 'missing-media-devices')).toBe('manual');
+  });
+
+  it('cobre indisponibilidade de câmera e permissão negada sem depender de hardware', () => {
+    expect(
+      getCameraSupportStatus({
+        isSecureContext: false,
+        navigator: {},
+        BarcodeDetector: class {} as never
+      })
+    ).toBe('missing-secure-context');
+    expect(
+      getCameraSupportStatus({
+        isSecureContext: true,
+        navigator: {},
+        BarcodeDetector: class {} as never
+      })
+    ).toBe('missing-media-devices');
+    expect(getCameraSupportStatus({ isSecureContext: true, navigator: {} })).toBe(
+      'missing-barcode-detector'
+    );
+
+    class FakeDomException extends Error {
+      override name: string;
+      constructor(name: string) {
+        super(name);
+        this.name = name;
+      }
+    }
+
+    expect(toCameraStartErrorMessage(new FakeDomException('NotAllowedError'))).toContain('negada');
+    expect(toCameraStartErrorMessage(new FakeDomException('NotFoundError'))).toContain('Nenhuma');
+    expect(toCameraStartErrorMessage(new FakeDomException('NotReadableError'))).toContain(
+      'acessar a câmera'
+    );
+    expect(toCameraStartErrorMessage(new Error('fail'))).toContain('Falha ao iniciar');
+  });
+
+  it('mantém pipeline único ao receber payload vindo da câmera', () => {
+    const fromManual = buildDetectionSnapshot(parser, validXpub);
+    const fromCamera = buildDetectionSnapshot(parser, validXpub);
+
+    expect(fromManual?.detected?.type).toBe('xpub');
+    expect(fromCamera?.detected?.type).toBe('xpub');
+    expect(fromCamera?.detected?.metadata?.network).toBe(fromManual?.detected?.metadata?.network);
+    expect(fromCamera?.autoClearedSensitiveData).toBe(false);
   });
 
   it('classifica como estável a PSBT mínima aprovada no QA manual', () => {

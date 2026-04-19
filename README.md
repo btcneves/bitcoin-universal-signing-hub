@@ -39,7 +39,7 @@ Referências:
 
 ### Experimental / parcial
 
-- scanner QR em uso real (câmera/dispositivos heterogêneos)
+- scanner QR por câmera no app web (MVP): alternância entre entrada manual/câmera, leitura via `BarcodeDetector` + `getUserMedia` e fallback explícito para modo manual
 - watch-only completo (fluxo local evoluiu para estado “preparado” com resumo de escopo/descriptor para `xpub/ypub/zpub`, ainda sem sincronização externa)
 - PSBT end-to-end (assinatura/finalização/transmissão reais). A UX pós-detecção local agora exibe painel de revisão offline + checkpoint local de revisão concluída + preparação local de encaminhamento (simulação offline) para assinatura externa futura, sem export real/assinatura/broadcast nesta fase
 - integração real com carteiras externas
@@ -134,6 +134,7 @@ Veja opções com Docker, Dev Container e bootstrap npm em `docs/reproducibility
 - Fluxos criptográficos críticos ainda dependem de validação funcional em ambiente real.
 - O app atual é base sólida de inspeção/validação, não produto final de assinatura em produção.
 - Ambiente com proxy restritivo pode bloquear instalação de dependências (`403` no registry).
+- Scanner por câmera depende de navegador com `BarcodeDetector`, permissão do usuário e contexto seguro (`https`/`localhost`); QR fragmentado avançado segue fora do escopo.
 
 ## Roadmap resumido
 

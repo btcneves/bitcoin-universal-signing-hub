@@ -10,7 +10,7 @@ Atualizado em: **2026-04-19**.
   - rodada 2: consolidou evidência de robustez sem novos bugs.
 - rodada 3 (parcial): reforçou consistência de estado/UI, robustez contra payloads inválidos “parecidos” e continuidade offline local, sem bugs novos.
 - **Estado atual**: detector e UI mantêm consistência forte com evidência manual real acumulada nas rodadas 1, 2 e 3.
-- **Próxima etapa oficial**: rodada funcional focada nas lacunas ainda não cobertas (evitar repetir casos já estáveis).
+- **Próxima etapa oficial**: validar em rodada manual direcionada o novo modo de leitura por câmera/QR (MVP) conectado ao pipeline já estável.
 - **Regra de origem de bug nesta fase**: issue funcional deve nascer de execução documentada (não de especulação).
 
 ## 1) Estado funcional atual do produto web (`apps/web`)
@@ -54,7 +54,7 @@ Atualizado em: **2026-04-19**.
 
 ### Parcial / experimental (existe estrutura, sem validação funcional fim a fim)
 
-- captura de QR por câmera/dispositivo real (atualmente entrada é por texto colado);
+- captura de QR por câmera/dispositivo real agora disponível em MVP no web app (modo alternável manual/câmera com fallback); ainda pendente validação ampla entre navegadores/dispositivos heterogêneos;
 - cards de ação na home (`Escanear QR`, `Fluxo watch-only`, `Fluxo sensível`, `Configurações`) são informativos, sem navegação nem fluxo transacional;
 - watch-only real completo (importação + derivação + visualização operacional com sincronização externa);
 - fluxo PSBT completo (review, assinatura externa, roundtrip e broadcast);
@@ -108,14 +108,15 @@ Atualizado em: **2026-04-19**.
 - **P1**: UX pós-detecção para payload sensível/PSBT (mensagem acionável de próximos passos e falhas comuns) **concluída no MVP local**; pendente integração de roundtrip externo controlado.
 - **P2**: vetores canônicos faltantes para `zpub` e casos testnet confiáveis (positivo + negativo).
 - **P2**: casos PSBT limítrofes com estados/falhas mais ricos e expectativa explícita.
-- **P3**: QR scan real por câmera e fluxo signer externo real (após fechar P1/P2).
+- **P2**: ampliar cobertura de compatibilidade do scan por câmera (browsers/dispositivos) e validar mensagens de fallback.
+- **P3**: fluxo signer externo real ponta-a-ponta (após consolidar câmera + P1/P2).
 
 ### 4.3 Ordem proposta da próxima fase
 
 1. **P0 (imediato):** converter para automação os cenários manuais que já ficaram estáveis nas rodadas 1, 2 e 3.
 2. **P1:** evoluir produto em watch-only real e UX pós-detecção sensível/PSBT (sem integração externa completa).
 3. **P2:** fechar vetores canônicos (`zpub`, testnet) e enriquecer matriz de falhas PSBT.
-4. **P3:** somente depois abrir QR por câmera e signer externo ponta-a-ponta.
+4. **P3:** somente depois avançar signer externo ponta-a-ponta.
 
 ### 4.4 Próxima entrega concreta recomendada no repositório
 

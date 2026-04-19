@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { UniversalQrService } from '@bursh/qr-engine';
 import type { ParsedQRPayload } from '@bursh/shared-types';
 import { HomeActions } from './components/HomeActions';
@@ -18,6 +18,21 @@ const WATCH_ONLY_TYPES = new Set<ParsedQRPayload['type']>(['xpub', 'ypub', 'zpub
 const isWatchOnlyType = (type: ParsedQRPayload['type']): type is 'xpub' | 'ypub' | 'zpub' =>
   WATCH_ONLY_TYPES.has(type);
 
+type BarcodeDetectorLike = {
+  detect: (source: ImageBitmapSource) => Promise<Array<{ rawValue?: string }>>;
+};
+type BarcodeDetectorCtor = new (options?: { formats?: string[] }) => BarcodeDetectorLike;
+
+type CameraEnvironment = {
+  isSecureContext?: boolean;
+  BarcodeDetector?: BarcodeDetectorCtor;
+  navigator?: {
+    mediaDevices?: {
+      getUserMedia?: (constraints: MediaStreamConstraints) => Promise<MediaStream>;
+    };
+  };
+};
+
 export type DetectionSnapshot = {
   scannerInput: string;
   errorMessage?: string;
@@ -25,6 +40,13 @@ export type DetectionSnapshot = {
   autoClearedSensitiveData: boolean;
   lastActionMessage?: string;
 };
+
+export type ScannerInputMode = 'manual' | 'camera';
+export type CameraSupportStatus =
+  | 'supported'
+  | 'missing-secure-context'
+  | 'missing-barcode-detector'
+  | 'missing-media-devices';
 
 export type WatchOnlySnapshot = {
   ready: boolean;
@@ -562,8 +584,53 @@ export const buildDetectionSnapshot = (
   }
 };
 
+export const getCameraSupportStatus = (
+  env: CameraEnvironment = globalThis as CameraEnvironment
+): CameraSupportStatus => {
+  if (env.isSecureContext === false) return 'missing-secure-context';
+  if (!env.BarcodeDetector) return 'missing-barcode-detector';
+  if (!env.navigator?.mediaDevices?.getUserMedia) return 'missing-media-devices';
+  return 'supported';
+};
+
+export const getCameraSupportMessage = (status: CameraSupportStatus): string | undefined => {
+  if (status === 'supported') return undefined;
+  if (status === 'missing-secure-context') {
+    return 'Leitura por câmera requer contexto seguro (HTTPS ou localhost).';
+  }
+  if (status === 'missing-barcode-detector') {
+    return 'Leitura por câmera indisponível neste navegador (BarcodeDetector não suportado).';
+  }
+  return 'Leitura por câmera indisponível (API de câmera não suportada).';
+};
+
+export const resolveRequestedInputMode = (
+  requestedMode: ScannerInputMode,
+  supportStatus: CameraSupportStatus
+): ScannerInputMode =>
+  requestedMode === 'camera' && supportStatus !== 'supported' ? 'manual' : requestedMode;
+
+export const toCameraStartErrorMessage = (error: unknown): string => {
+  const errorName =
+    typeof error === 'object' && error && 'name' in error ? String(error.name) : undefined;
+
+  if (errorName === 'NotAllowedError') {
+    return 'Permissão de câmera negada. Continue com entrada manual.';
+  }
+  if (errorName === 'NotFoundError') {
+    return 'Nenhuma câmera disponível. Continue com entrada manual.';
+  }
+  if (errorName === 'NotReadableError') {
+    return 'Não foi possível acessar a câmera no momento. Continue com entrada manual.';
+  }
+  return 'Falha ao iniciar leitura por câmera. Continue com entrada manual.';
+};
+
 export function App() {
   const [scannerInput, setScannerInput] = useState('');
+  const [inputMode, setInputMode] = useState<ScannerInputMode>('manual');
+  const [cameraStatusMessage, setCameraStatusMessage] = useState<string | undefined>();
+  const [cameraScanning, setCameraScanning] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [detected, setDetected] = useState<ParsedQRPayload | undefined>();
   const [autoClearedSensitiveData, setAutoClearedSensitiveData] = useState(false);
@@ -572,8 +639,33 @@ export function App() {
   const [psbtReviewCompleted, setPsbtReviewCompleted] = useState(false);
   const [psbtForwardingPrepared, setPsbtForwardingPrepared] = useState(false);
   const detector = useMemo(() => new UniversalQrService(), []);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
+  const cameraDetectorRef = useRef<BarcodeDetectorLike | null>(null);
+  const cameraAnimationRef = useRef<number | undefined>(undefined);
+
+  const cameraSupportStatus = getCameraSupportStatus();
+  const cameraSupportMessage = getCameraSupportMessage(cameraSupportStatus);
 
   const isInputEmpty = scannerInput.trim().length === 0;
+
+  const stopCameraSession = useCallback(() => {
+    if (cameraAnimationRef.current !== undefined) {
+      window.cancelAnimationFrame(cameraAnimationRef.current);
+      cameraAnimationRef.current = undefined;
+    }
+
+    const stream = cameraStreamRef.current;
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      cameraStreamRef.current = null;
+    }
+    cameraDetectorRef.current = null;
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setCameraScanning(false);
+  }, []);
 
   const handleManualClear = () => {
     const snapshot = buildManualClearSnapshot(scannerInput);
@@ -582,6 +674,21 @@ export function App() {
     setErrorMessage(snapshot.errorMessage);
     setAutoClearedSensitiveData(snapshot.autoClearedSensitiveData);
     setLastActionMessage(snapshot.lastActionMessage);
+  };
+
+  const handleSwitchToManual = () => {
+    setInputMode('manual');
+    setCameraStatusMessage(undefined);
+  };
+
+  const handleSwitchToCamera = () => {
+    const nextMode = resolveRequestedInputMode('camera', cameraSupportStatus);
+    setInputMode(nextMode);
+    if (nextMode === 'manual') {
+      setCameraStatusMessage(cameraSupportMessage);
+      return;
+    }
+    setCameraStatusMessage('Aponte para um QR válido para preencher o fluxo automaticamente.');
   };
 
   useEffect(() => {
@@ -599,6 +706,97 @@ export function App() {
       setScannerInput(snapshot.scannerInput);
     }
   }, [detector, scannerInput]);
+
+  useEffect(() => {
+    const nextMode = resolveRequestedInputMode(inputMode, cameraSupportStatus);
+    if (nextMode !== inputMode) {
+      setInputMode(nextMode);
+      setCameraStatusMessage(cameraSupportMessage);
+    }
+  }, [cameraSupportMessage, cameraSupportStatus, inputMode, stopCameraSession]);
+
+  useEffect(() => {
+    if (inputMode !== 'camera') {
+      stopCameraSession();
+      return;
+    }
+
+    if (cameraSupportStatus !== 'supported') {
+      stopCameraSession();
+      setCameraStatusMessage(cameraSupportMessage);
+      return;
+    }
+
+    let cancelled = false;
+
+    const startCamera = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false
+        });
+        if (cancelled) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
+        cameraStreamRef.current = stream;
+        const detectorCtor = (globalThis as CameraEnvironment).BarcodeDetector;
+        if (!detectorCtor) {
+          throw new Error('BarcodeDetectorUnavailable');
+        }
+        cameraDetectorRef.current = new detectorCtor({ formats: ['qr_code'] });
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+        }
+        setCameraScanning(true);
+        setCameraStatusMessage('Câmera ativa. Procurando QR...');
+
+        const scanLoop = async () => {
+          if (cancelled || inputMode !== 'camera') return;
+          const localDetector = cameraDetectorRef.current;
+          const video = videoRef.current;
+          if (!localDetector || !video) return;
+
+          try {
+            const codes = await localDetector.detect(video);
+            const rawValue = codes[0]?.rawValue?.trim();
+            if (rawValue) {
+              setScannerInput(rawValue);
+              setLastActionMessage('Payload recebido por câmera e enviado ao pipeline local.');
+              setInputMode('manual');
+              setCameraStatusMessage('Leitura concluída. Revise o resultado abaixo.');
+              stopCameraSession();
+              return;
+            }
+          } catch {
+            // mantém loop ativo enquanto câmera estiver em execução
+          }
+
+          cameraAnimationRef.current = window.requestAnimationFrame(() => {
+            void scanLoop();
+          });
+        };
+
+        void scanLoop();
+      } catch (error) {
+        if (!cancelled) {
+          stopCameraSession();
+          setInputMode('manual');
+          setCameraStatusMessage(toCameraStartErrorMessage(error));
+        }
+      }
+    };
+
+    void startCamera();
+
+    return () => {
+      cancelled = true;
+      stopCameraSession();
+    };
+  }, [cameraSupportMessage, cameraSupportStatus, inputMode]);
 
   const detectionStateMessage = errorMessage
     ? 'erro no parsing local'
@@ -654,12 +852,43 @@ export function App() {
         <label className="input-label" htmlFor="payload-input">
           Payload de teste
         </label>
+        <div className="input-mode-row" role="group" aria-label="Modo de entrada">
+          <button
+            type="button"
+            onClick={handleSwitchToManual}
+            disabled={inputMode === 'manual'}
+            aria-pressed={inputMode === 'manual'}
+          >
+            Entrada manual
+          </button>
+          <button
+            type="button"
+            onClick={handleSwitchToCamera}
+            disabled={inputMode === 'camera'}
+            aria-pressed={inputMode === 'camera'}
+          >
+            Escanear QR (câmera)
+          </button>
+        </div>
+        {cameraStatusMessage ? <p className="camera-state">{cameraStatusMessage}</p> : null}
+        {inputMode === 'camera' ? (
+          <section className="camera-panel">
+            <p className="camera-state">
+              Estado da câmera: {cameraScanning ? 'ativa' : 'iniciando/aguardando'}
+            </p>
+            <video ref={videoRef} className="camera-preview" muted playsInline />
+            <p className="camera-hint">
+              Se não conseguir usar a câmera neste dispositivo, volte para a entrada manual.
+            </p>
+          </section>
+        ) : null}
         <textarea
           id="payload-input"
           value={scannerInput}
           onChange={(event) => setScannerInput(event.target.value)}
           placeholder="Cole o payload lido do QR"
           rows={4}
+          disabled={inputMode === 'camera'}
         />
 
         <p className="input-state">Estado da entrada: {isInputEmpty ? 'vazia' : 'preenchida'}</p>
