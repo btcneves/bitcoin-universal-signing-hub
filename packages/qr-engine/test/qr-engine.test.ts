@@ -83,7 +83,13 @@ describe('QR parser', () => {
   });
 
   it('detecta psbt base64', () => {
-    const psbt = Buffer.from([0x70, 0x73, 0x62, 0x74, 0xff, 0x00]).toString('base64');
+    const psbt =
+      'cHNidP8BADwCAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////wD/////AQAAAAAAAAAAAAAAAAAAAAA=';
     expect(parser.detectPayload(psbt).type).toBe('psbt');
+  });
+
+  it('não promove psbt truncada como válida', () => {
+    const truncatedPsbt = 'cHNidP8BAHECAAAAAQAAAAAAAAAAAAAAAAAAAA';
+    expect(parser.detectPayload(truncatedPsbt).type).toBe('unknown');
   });
 });
