@@ -83,7 +83,7 @@ export class Bip84WalletService implements WalletService {
   deriveAddress(xpub: string, change: 0 | 1, index: number): string {
     const normalizedXpub = normalizeToXpub(xpub);
     const accountNode = HDKey.fromExtendedKey(normalizedXpub);
-    const childNode = accountNode.derive(`${change}/${index}`);
+    const childNode = accountNode.deriveChild(change).deriveChild(index);
 
     if (!childNode.publicKey) {
       throw new Error('Falha ao derivar chave pública');
