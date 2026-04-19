@@ -41,7 +41,7 @@ Referências:
 
 - scanner QR em uso real (câmera/dispositivos heterogêneos)
 - watch-only completo (fluxo local evoluiu para estado “preparado” com resumo de escopo/descriptor para `xpub/ypub/zpub`, ainda sem sincronização externa)
-- PSBT end-to-end (assinatura/finalização/transmissão reais). A UX pós-detecção local agora exibe painel de revisão offline + checkpoint local de revisão concluída para “encaminhamento externo futuro” (sem export real/assinatura/broadcast nesta fase)
+- PSBT end-to-end (assinatura/finalização/transmissão reais). A UX pós-detecção local agora exibe painel de revisão offline + checkpoint local de revisão concluída + preparação local de encaminhamento (simulação offline) para assinatura externa futura, sem export real/assinatura/broadcast nesta fase
 - integração real com carteiras externas
 - app Android
 - pipeline Secure USB de produção

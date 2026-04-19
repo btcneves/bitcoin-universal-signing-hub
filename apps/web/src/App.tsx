@@ -71,6 +71,21 @@ export type PsbtHandoffSnapshot = {
   };
 };
 
+export type PsbtForwardingSnapshot = {
+  ready: boolean;
+  prepared: boolean;
+  statusLabel: string;
+  guidance: string;
+  localForwardingLabel: string;
+  forwardingToken?: string;
+  flowBridge: {
+    localReviewCheckpoint: 'blocked' | 'done';
+    localForwardingPreparation: 'blocked' | 'available' | 'done';
+    externalSigningFuture: 'pending';
+    validationAndFinalizeFuture: 'pending';
+  };
+};
+
 const toUiError = (error: unknown): string => {
   if (error instanceof Error) {
     return `Falha ao processar payload (${error.name}). Revise formato e conteúdo do texto colado.`;
@@ -395,6 +410,68 @@ export const buildPsbtHandoffSnapshot = (
   };
 };
 
+const buildForwardingToken = (fingerprint?: string): string => {
+  if (!fingerprint) return 'psbt-local-unknown';
+  return `psbt-local-${fingerprint.replace('...', '')}`;
+};
+
+export const buildPsbtForwardingSnapshot = (
+  psbtHandoff: PsbtHandoffSnapshot,
+  forwardingPrepared: boolean,
+  psbtReview: PsbtReviewSnapshot
+): PsbtForwardingSnapshot => {
+  if (!psbtHandoff.readyToHandoff) {
+    return {
+      ready: false,
+      prepared: false,
+      statusLabel: 'Encaminhamento local bloqueado',
+      guidance:
+        'Conclua primeiro o checkpoint de revisão PSBT para liberar o preparo local de encaminhamento externo futuro.',
+      localForwardingLabel: 'Preparação indisponível',
+      flowBridge: {
+        localReviewCheckpoint: 'blocked',
+        localForwardingPreparation: 'blocked',
+        externalSigningFuture: 'pending',
+        validationAndFinalizeFuture: 'pending'
+      }
+    };
+  }
+
+  if (!forwardingPrepared) {
+    return {
+      ready: true,
+      prepared: false,
+      statusLabel: 'Encaminhamento local disponível',
+      guidance:
+        'A revisão local já foi concluída. Prepare agora um checkpoint local de encaminhamento para uso com assinador externo em etapa futura.',
+      localForwardingLabel: 'Preparação pendente',
+      forwardingToken: buildForwardingToken(psbtReview.fingerprint),
+      flowBridge: {
+        localReviewCheckpoint: 'done',
+        localForwardingPreparation: 'available',
+        externalSigningFuture: 'pending',
+        validationAndFinalizeFuture: 'pending'
+      }
+    };
+  }
+
+  return {
+    ready: true,
+    prepared: true,
+    statusLabel: 'Encaminhamento local preparado (simulação offline)',
+    guidance:
+      'Checkpoint local concluído. A próxima integração futura poderá exportar/encaminhar para assinador externo mantendo esta separação de etapas.',
+    localForwardingLabel: 'Preparação concluída',
+    forwardingToken: buildForwardingToken(psbtReview.fingerprint),
+    flowBridge: {
+      localReviewCheckpoint: 'done',
+      localForwardingPreparation: 'done',
+      externalSigningFuture: 'pending',
+      validationAndFinalizeFuture: 'pending'
+    }
+  };
+};
+
 export const buildWatchOnlySnapshot = (detected?: ParsedQRPayload): WatchOnlySnapshot => {
   if (!detected || !isWatchOnlyType(detected.type)) {
     return { ready: false, uiStateMessage: 'Watch-only indisponível para o payload atual.' };
@@ -493,6 +570,7 @@ export function App() {
   const [lastActionMessage, setLastActionMessage] = useState<string | undefined>();
   const [watchOnlyPrepared, setWatchOnlyPrepared] = useState(false);
   const [psbtReviewCompleted, setPsbtReviewCompleted] = useState(false);
+  const [psbtForwardingPrepared, setPsbtForwardingPrepared] = useState(false);
   const detector = useMemo(() => new UniversalQrService(), []);
 
   const isInputEmpty = scannerInput.trim().length === 0;
@@ -534,6 +612,11 @@ export function App() {
   const watchOnlyPreparation = buildWatchOnlyPreparationSnapshot(watchOnly, watchOnlyPrepared);
   const psbtReview = buildPsbtReviewSnapshot(detected, autoClearedSensitiveData);
   const psbtHandoff = buildPsbtHandoffSnapshot(psbtReview, psbtReviewCompleted);
+  const psbtForwarding = buildPsbtForwardingSnapshot(
+    psbtHandoff,
+    psbtForwardingPrepared,
+    psbtReview
+  );
 
   useEffect(() => {
     setWatchOnlyPrepared(false);
@@ -542,6 +625,10 @@ export function App() {
   useEffect(() => {
     setPsbtReviewCompleted(false);
   }, [detected?.raw, psbtReview.ready]);
+
+  useEffect(() => {
+    setPsbtForwardingPrepared(false);
+  }, [detected?.raw, psbtReview.ready, psbtReviewCompleted]);
 
   return (
     <main className="container">
@@ -665,6 +752,20 @@ export function App() {
             <button type="button" onClick={() => setPsbtReviewCompleted(true)}>
               Marcar revisão PSBT como concluída (local)
             </button>
+            <p className="psbt-next-step-title">Preparação local de encaminhamento:</p>
+            <p className="psbt-state">Estado: {psbtForwarding.statusLabel}</p>
+            <p className="psbt-guidance">{psbtForwarding.guidance}</p>
+            <p className="psbt-state">Preparação: {psbtForwarding.localForwardingLabel}</p>
+            <p className="psbt-state">
+              Token local de referência: {psbtForwarding.forwardingToken ?? 'n/d'}
+            </p>
+            <button
+              type="button"
+              onClick={() => setPsbtForwardingPrepared(true)}
+              disabled={!psbtForwarding.ready}
+            >
+              Preparar encaminhamento para assinador externo (simulação local)
+            </button>
             <p className="psbt-next-step-title">Etapas do fluxo (separação explícita):</p>
             <ol>
               <li>
@@ -674,6 +775,14 @@ export function App() {
               <li>
                 Exportação futura:{' '}
                 {psbtHandoff.flowStages.futureExport === 'ready' ? 'pronta' : 'pendente'}
+              </li>
+              <li>
+                Encaminhamento local atual:{' '}
+                {psbtForwarding.flowBridge.localForwardingPreparation === 'done'
+                  ? 'concluído (simulado localmente)'
+                  : psbtForwarding.flowBridge.localForwardingPreparation === 'available'
+                    ? 'disponível'
+                    : 'bloqueado'}
               </li>
               <li>Assinatura externa futura: pendente (não integrada nesta versão)</li>
               <li>Validação/finalização futura: pendente (não integrada nesta versão)</li>

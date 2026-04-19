@@ -5,6 +5,7 @@ import { UniversalQrService } from '@bursh/qr-engine';
 import {
   buildDetectionSnapshot,
   buildManualClearSnapshot,
+  buildPsbtForwardingSnapshot,
   buildPsbtHandoffSnapshot,
   buildPsbtReviewSnapshot,
   buildWatchOnlyPreparationSnapshot,
@@ -218,6 +219,25 @@ describe('app flow regressions', () => {
     expect(handoffReady.localCheckpointLabel).toContain('concluído');
     expect(handoffReady.flowStages.localReview).toBe('done');
     expect(handoffReady.flowStages.futureExport).toBe('ready');
+
+    const forwardingBlocked = buildPsbtForwardingSnapshot(handoffPending, true, review);
+    expect(forwardingBlocked.ready).toBe(false);
+    expect(forwardingBlocked.statusLabel).toContain('bloqueado');
+    expect(forwardingBlocked.localForwardingLabel).toContain('indisponível');
+
+    const forwardingAvailable = buildPsbtForwardingSnapshot(handoffReady, false, review);
+    expect(forwardingAvailable.ready).toBe(true);
+    expect(forwardingAvailable.prepared).toBe(false);
+    expect(forwardingAvailable.statusLabel).toContain('disponível');
+    expect(forwardingAvailable.forwardingToken).toContain('psbt-local-');
+    expect(forwardingAvailable.flowBridge.localForwardingPreparation).toBe('available');
+
+    const forwardingPrepared = buildPsbtForwardingSnapshot(handoffReady, true, review);
+    expect(forwardingPrepared.ready).toBe(true);
+    expect(forwardingPrepared.prepared).toBe(true);
+    expect(forwardingPrepared.statusLabel).toContain('simulação offline');
+    expect(forwardingPrepared.localForwardingLabel).toContain('concluída');
+    expect(forwardingPrepared.flowBridge.localForwardingPreparation).toBe('done');
   });
 
   it('não habilita painel PSBT para payload truncada/inválida e mantém isolamento sensível', () => {
@@ -231,6 +251,9 @@ describe('app flow regressions', () => {
     const noHandoff = buildPsbtHandoffSnapshot(noPsbtPanel, true);
     expect(noHandoff.readyToHandoff).toBe(false);
     expect(noHandoff.localCheckpointLabel).toContain('indisponível');
+    const noForwarding = buildPsbtForwardingSnapshot(noHandoff, true, noPsbtPanel);
+    expect(noForwarding.ready).toBe(false);
+    expect(noForwarding.statusLabel).toContain('bloqueado');
 
     const xpubDetection = buildDetectionSnapshot(parser, validXpub);
     const xpubWatchOnly = buildWatchOnlySnapshot(xpubDetection?.detected);
@@ -253,6 +276,8 @@ describe('app flow regressions', () => {
     const psbtReview = buildPsbtReviewSnapshot(psbtDetection?.detected, true);
     const psbtHandoffReady = buildPsbtHandoffSnapshot(psbtReview, true);
     expect(psbtHandoffReady.readyToHandoff).toBe(true);
+    const psbtForwardingReady = buildPsbtForwardingSnapshot(psbtHandoffReady, true, psbtReview);
+    expect(psbtForwardingReady.prepared).toBe(true);
 
     const xpubDetection = buildDetectionSnapshot(parser, validXpub);
     const watchOnly = buildWatchOnlySnapshot(xpubDetection?.detected);
@@ -261,6 +286,13 @@ describe('app flow regressions', () => {
     expect(psbtUnavailableAfterSwitch.ready).toBe(false);
     const handoffAfterSwitch = buildPsbtHandoffSnapshot(psbtUnavailableAfterSwitch, true);
     expect(handoffAfterSwitch.readyToHandoff).toBe(false);
+    const forwardingAfterSwitch = buildPsbtForwardingSnapshot(
+      handoffAfterSwitch,
+      true,
+      psbtUnavailableAfterSwitch
+    );
+    expect(forwardingAfterSwitch.ready).toBe(false);
+    expect(forwardingAfterSwitch.localForwardingLabel).toContain('indisponível');
 
     const clearSnapshot = buildManualClearSnapshot('payload qualquer');
     expect(clearSnapshot.scannerInput).toBe('');
