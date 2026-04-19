@@ -49,6 +49,8 @@ Referências:
 ### Validação funcional desta fase
 
 - checklist manual de validação web: `docs/web-functional-checklist.md`
+- template de evidência de teste manual: `docs/web-test-report-template.md`
+- fluxo para abertura de bugs funcionais web: `docs/web-bug-reporting-flow.md`
 - status funcional consolidado: `docs/project-status.md`
 - prioridades da próxima fase: `docs/roadmap.md`
 

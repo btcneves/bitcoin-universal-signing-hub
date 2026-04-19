@@ -1,0 +1,88 @@
+name: Web functional bug
+about: Reporta bug funcional observado em teste manual do app web
+labels: [bug, web, functional]
+description: Use após executar checklist e preencher evidência de teste.
+body:
+  - type: input
+    attributes:
+      label: Checklist case ID
+      description: 'Informe o ID da checklist (ex.: WF-B03)'
+      placeholder: WF-B03
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Ambiente de teste
+      description: SO, navegador, versões de Node/pnpm e commit testado
+      placeholder: |
+        - OS: ...
+        - Browser: ...
+        - Node: ...
+        - pnpm: ...
+        - Commit: ...
+    validations:
+      required: true
+
+  - type: dropdown
+    attributes:
+      label: Maturidade do fluxo
+      options:
+        - Estável
+        - Heurístico
+        - Experimental
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Payload usado (mascarado se sensível)
+      description: Não incluir seed/chave real
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Passos para reproduzir
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Resultado esperado
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Resultado observado
+    validations:
+      required: true
+
+  - type: dropdown
+    attributes:
+      label: Status da execução
+      options:
+        - Falhou
+        - Parcial
+    validations:
+      required: true
+
+  - type: dropdown
+    attributes:
+      label: Impacto de zona de segurança
+      options:
+        - Zone 0
+        - Zone 1
+        - Zone 2
+        - Unknown
+
+  - type: textarea
+    attributes:
+      label: Evidências
+      description: Anexe print, log de console e/ou link do relatório de teste
+      placeholder: Links, imagens, logs
