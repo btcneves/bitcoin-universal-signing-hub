@@ -57,6 +57,20 @@ export type PsbtReviewSnapshot = {
   fingerprint?: string;
 };
 
+export type PsbtHandoffSnapshot = {
+  reviewCompleted: boolean;
+  readyToHandoff: boolean;
+  statusLabel: string;
+  guidance: string;
+  localCheckpointLabel: string;
+  flowStages: {
+    localReview: 'done' | 'active';
+    futureExport: 'pending' | 'ready';
+    futureExternalSigning: 'pending';
+    futureValidationAndFinalize: 'pending';
+  };
+};
+
 const toUiError = (error: unknown): string => {
   if (error instanceof Error) {
     return `Falha ao processar payload (${error.name}). Revise formato e conteúdo do texto colado.`;
@@ -327,6 +341,60 @@ export const buildPsbtReviewSnapshot = (
   return snapshot;
 };
 
+export const buildPsbtHandoffSnapshot = (
+  psbtReview: PsbtReviewSnapshot,
+  reviewCompleted: boolean
+): PsbtHandoffSnapshot => {
+  if (!psbtReview.ready) {
+    return {
+      reviewCompleted: false,
+      readyToHandoff: false,
+      statusLabel: 'Aguardando PSBT válida',
+      guidance:
+        'Carregue uma PSBT válida para habilitar checkpoint local de revisão e preparar encaminhamento futuro.',
+      localCheckpointLabel: 'Checkpoint local indisponível',
+      flowStages: {
+        localReview: 'active',
+        futureExport: 'pending',
+        futureExternalSigning: 'pending',
+        futureValidationAndFinalize: 'pending'
+      }
+    };
+  }
+
+  if (!reviewCompleted) {
+    return {
+      reviewCompleted: false,
+      readyToHandoff: false,
+      statusLabel: 'Revisão local pendente',
+      guidance:
+        'Conclua o checkpoint local da revisão PSBT para sinalizar preparo de encaminhamento externo futuro (sem exportar nesta etapa).',
+      localCheckpointLabel: 'Checkpoint local pendente',
+      flowStages: {
+        localReview: 'active',
+        futureExport: 'pending',
+        futureExternalSigning: 'pending',
+        futureValidationAndFinalize: 'pending'
+      }
+    };
+  }
+
+  return {
+    reviewCompleted: true,
+    readyToHandoff: true,
+    statusLabel: 'PSBT pronta para encaminhamento externo futuro',
+    guidance:
+      'Revisão local concluída. Próxima etapa futura: exportar/encaminhar para assinador externo controlado, sem assinatura real nesta versão.',
+    localCheckpointLabel: 'Checkpoint local concluído',
+    flowStages: {
+      localReview: 'done',
+      futureExport: 'ready',
+      futureExternalSigning: 'pending',
+      futureValidationAndFinalize: 'pending'
+    }
+  };
+};
+
 export const buildWatchOnlySnapshot = (detected?: ParsedQRPayload): WatchOnlySnapshot => {
   if (!detected || !isWatchOnlyType(detected.type)) {
     return { ready: false, uiStateMessage: 'Watch-only indisponível para o payload atual.' };
@@ -424,6 +492,7 @@ export function App() {
   const [autoClearedSensitiveData, setAutoClearedSensitiveData] = useState(false);
   const [lastActionMessage, setLastActionMessage] = useState<string | undefined>();
   const [watchOnlyPrepared, setWatchOnlyPrepared] = useState(false);
+  const [psbtReviewCompleted, setPsbtReviewCompleted] = useState(false);
   const detector = useMemo(() => new UniversalQrService(), []);
 
   const isInputEmpty = scannerInput.trim().length === 0;
@@ -464,10 +533,15 @@ export function App() {
   const watchOnly = buildWatchOnlySnapshot(detected);
   const watchOnlyPreparation = buildWatchOnlyPreparationSnapshot(watchOnly, watchOnlyPrepared);
   const psbtReview = buildPsbtReviewSnapshot(detected, autoClearedSensitiveData);
+  const psbtHandoff = buildPsbtHandoffSnapshot(psbtReview, psbtReviewCompleted);
 
   useEffect(() => {
     setWatchOnlyPrepared(false);
   }, [detected?.raw, watchOnly.ready]);
+
+  useEffect(() => {
+    setPsbtReviewCompleted(false);
+  }, [detected?.raw, psbtReview.ready]);
 
   return (
     <main className="container">
@@ -584,6 +658,26 @@ export function App() {
               <li>Fingerprint curta local: {psbtReview.fingerprint ?? 'n/d'}</li>
             </ul>
             <p className="psbt-guidance">{psbtReview.guidance}</p>
+            <p className="psbt-next-step-title">Checkpoint local pós-revisão:</p>
+            <p className="psbt-state">Estado: {psbtHandoff.statusLabel}</p>
+            <p className="psbt-guidance">{psbtHandoff.guidance}</p>
+            <p className="psbt-state">Checkpoint: {psbtHandoff.localCheckpointLabel}</p>
+            <button type="button" onClick={() => setPsbtReviewCompleted(true)}>
+              Marcar revisão PSBT como concluída (local)
+            </button>
+            <p className="psbt-next-step-title">Etapas do fluxo (separação explícita):</p>
+            <ol>
+              <li>
+                Revisão local:{' '}
+                {psbtHandoff.flowStages.localReview === 'done' ? 'concluída' : 'ativa'}
+              </li>
+              <li>
+                Exportação futura:{' '}
+                {psbtHandoff.flowStages.futureExport === 'ready' ? 'pronta' : 'pendente'}
+              </li>
+              <li>Assinatura externa futura: pendente (não integrada nesta versão)</li>
+              <li>Validação/finalização futura: pendente (não integrada nesta versão)</li>
+            </ol>
             <p className="psbt-next-step-title">Próximos passos sugeridos:</p>
             <ol>
               <li>Comparar contagem de entradas/saídas com o contexto da transação esperada.</li>

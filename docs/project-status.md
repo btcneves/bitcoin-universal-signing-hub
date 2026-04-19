@@ -47,6 +47,8 @@ Atualizado em: **2026-04-19**.
 - MVP de UX pós-detecção de PSBT:
   - estado explícito de “PSBT pronta para revisão offline” mantendo auto-clear sensível;
   - painel local com formato detectado, tamanho, fingerprint curta e resumo técnico da unsigned tx (versão e contagem de entradas/saídas quando disponível);
+  - checkpoint local explícito de revisão concluída, liberando estado “pronta para encaminhamento externo futuro” sem integrar assinatura real;
+  - separação explícita de etapas na UI: revisão local, exportação futura, assinatura externa futura e validação/finalização futura;
   - orientação objetiva de próximos passos sem assinatura, sem broadcast e sem integração externa nesta etapa.
 
 ### Parcial / experimental (existe estrutura, sem validação funcional fim a fim)
@@ -116,15 +118,17 @@ Atualizado em: **2026-04-19**.
 
 ### 4.4 Próxima entrega concreta recomendada no repositório
 
-**Entrega escolhida agora:** _UX pós-detecção de PSBT (MVP local) após consolidação watch-only._
+**Entrega escolhida agora:** _PSBT pós-revisão com checkpoint local de encaminhamento futuro (MVP local) após consolidação watch-only._
 
 Escopo objetivo desta entrega:
 
 1. preservar detecção de PSBT válida e rejeição de PSBT truncada/quase-PSBT;
 2. expor painel local de revisão offline com feedback explícito do que foi reconhecido;
-3. manter auto-clear sensível e isolamento do fluxo sensível;
-4. cobrir em testes automatizados o novo estado/painel PSBT e coexistência com regressões já cobertas;
-5. manter fora desta entrega: Android, Secure USB, assinatura real, broadcast real, integração externa ponta-a-ponta.
+3. adicionar checkpoint local de revisão concluída para estado acionável sem integrar export/assinatura real;
+4. explicitar na UI a separação de etapas futuras (exportação, assinatura externa, validação/finalização);
+5. manter auto-clear sensível e isolamento do fluxo sensível;
+6. cobrir em testes automatizados o novo estado/painel PSBT e coexistência com regressões já cobertas;
+7. manter fora desta entrega: Android, Secure USB, assinatura real, broadcast real, integração externa ponta-a-ponta.
 
 ## 5) Riscos técnicos ainda abertos
 

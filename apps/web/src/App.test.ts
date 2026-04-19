@@ -5,6 +5,7 @@ import { UniversalQrService } from '@bursh/qr-engine';
 import {
   buildDetectionSnapshot,
   buildManualClearSnapshot,
+  buildPsbtHandoffSnapshot,
   buildPsbtReviewSnapshot,
   buildWatchOnlyPreparationSnapshot,
   buildWatchOnlySnapshot,
@@ -203,6 +204,20 @@ describe('app flow regressions', () => {
     expect(review.inputCount).toBe(1);
     expect(review.outputCount).toBe(1);
     expect(review.guidance).toContain('não há assinatura nem broadcast');
+
+    const handoffPending = buildPsbtHandoffSnapshot(review, false);
+    expect(handoffPending.readyToHandoff).toBe(false);
+    expect(handoffPending.statusLabel).toContain('pendente');
+    expect(handoffPending.flowStages.localReview).toBe('active');
+    expect(handoffPending.flowStages.futureExport).toBe('pending');
+
+    const handoffReady = buildPsbtHandoffSnapshot(review, true);
+    expect(handoffReady.reviewCompleted).toBe(true);
+    expect(handoffReady.readyToHandoff).toBe(true);
+    expect(handoffReady.statusLabel).toContain('encaminhamento externo futuro');
+    expect(handoffReady.localCheckpointLabel).toContain('concluído');
+    expect(handoffReady.flowStages.localReview).toBe('done');
+    expect(handoffReady.flowStages.futureExport).toBe('ready');
   });
 
   it('não habilita painel PSBT para payload truncada/inválida e mantém isolamento sensível', () => {
@@ -213,6 +228,9 @@ describe('app flow regressions', () => {
     const noPsbtPanel = buildPsbtReviewSnapshot(truncatedDetection?.detected, false);
     expect(noPsbtPanel.ready).toBe(false);
     expect(noPsbtPanel.statusLabel).toContain('indisponível');
+    const noHandoff = buildPsbtHandoffSnapshot(noPsbtPanel, true);
+    expect(noHandoff.readyToHandoff).toBe(false);
+    expect(noHandoff.localCheckpointLabel).toContain('indisponível');
 
     const xpubDetection = buildDetectionSnapshot(parser, validXpub);
     const xpubWatchOnly = buildWatchOnlySnapshot(xpubDetection?.detected);
@@ -226,6 +244,27 @@ describe('app flow regressions', () => {
     expect(seedDetection?.autoClearedSensitiveData).toBe(true);
     expect(buildWatchOnlySnapshot(seedDetection?.detected).ready).toBe(false);
     expect(buildPsbtReviewSnapshot(seedDetection?.detected, true).ready).toBe(false);
+  });
+
+  it('mantém convivência correta entre checkpoint PSBT, watch-only e limpeza manual', () => {
+    const validPsbt =
+      'cHNidP8BADwCAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////wD/////AQAAAAAAAAAAAAAAAAAAAAA=';
+    const psbtDetection = buildDetectionSnapshot(parser, validPsbt);
+    const psbtReview = buildPsbtReviewSnapshot(psbtDetection?.detected, true);
+    const psbtHandoffReady = buildPsbtHandoffSnapshot(psbtReview, true);
+    expect(psbtHandoffReady.readyToHandoff).toBe(true);
+
+    const xpubDetection = buildDetectionSnapshot(parser, validXpub);
+    const watchOnly = buildWatchOnlySnapshot(xpubDetection?.detected);
+    expect(watchOnly.ready).toBe(true);
+    const psbtUnavailableAfterSwitch = buildPsbtReviewSnapshot(xpubDetection?.detected, false);
+    expect(psbtUnavailableAfterSwitch.ready).toBe(false);
+    const handoffAfterSwitch = buildPsbtHandoffSnapshot(psbtUnavailableAfterSwitch, true);
+    expect(handoffAfterSwitch.readyToHandoff).toBe(false);
+
+    const clearSnapshot = buildManualClearSnapshot('payload qualquer');
+    expect(clearSnapshot.scannerInput).toBe('');
+    expect(clearSnapshot.lastActionMessage).toContain('removido');
   });
 
   it('classifica como estável a PSBT mínima aprovada no QA manual', () => {
