@@ -1,37 +1,41 @@
-# Política de Persistência e Telemetria
+# Política de persistência e telemetria
 
-## Escopo
+## Objetivo
 
-Esta política cobre todo fluxo de dados em `apps/web` e bibliotecas do monorepo.
+Reduzir risco de exposição de dados sensíveis em armazenamento local, logs e transporte de telemetria.
 
-## Dados que **nunca** podem ser persistidos
+## Dados que nunca podem ser persistidos
 
 - mnemonic BIP39
 - passphrase BIP39
 - seed derivada
 - private keys / WIF / xprv
-- payload bruto de scanner contendo os itens acima
+- payload bruto que contenha qualquer item sensível
 
-## Vetores bloqueados por lint
+## Vetores bloqueados por regra de lint
 
 - `localStorage.setItem`
 - `sessionStorage.setItem`
 - `indexedDB.open`
 - `caches.open` (Cache API)
-- imports de `redux-persist`
+- `redux-persist`
 - `persist` de `zustand/middleware`
 - `localforage`
 - `idb-keyval`
-- serialização com `JSON.stringify` de identificadores de segredo
+- serialização indevida de segredo (`JSON.stringify`)
 
 ## Regras operacionais
 
-1. Estado sensível deve existir apenas em memória local (`useState`, variáveis locais, buffers transitórios).
-2. Fluxo watch-only (xpub/zpub/endereços) pode ser persistido no futuro, desde que separado de zona sensível.
-3. Logs e telemetry devem usar redaction antes de serialização/transporte.
-4. Erros devem ser apresentados com mensagens genéricas; nunca incluir payload original sensível.
+1. Dados sensíveis só podem existir em memória transitória.
+2. Logs/telemetria devem aplicar redaction antes de qualquer serialização/transporte.
+3. Mensagens de erro devem ser genéricas e sem eco de payload sensível.
+4. Persistência futura de dados watch-only deve permanecer segregada de Zona 0.
 
-## Limitações conhecidas
+## Limitações
 
-- ESLint reduz risco, mas não elimina risco total (ex.: eval dinâmico, dependências externas, builds sem lint).
-- Limpeza em JavaScript depende de GC; wipe em `Uint8Array` é mitigação parcial.
+- Lint reduz risco, mas não substitui revisão de arquitetura e testes de segurança.
+- GC e semântica de memória em JavaScript impedem garantia forense total de wipe.
+
+## Governança
+
+Mudanças em fluxos de estado/telemetria devem atualizar este documento e o `docs/threat-model.md`.
