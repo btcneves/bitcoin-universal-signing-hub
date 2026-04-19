@@ -81,27 +81,39 @@ Atualizado em: **2026-04-19**.
 4. **Monorepo por módulos de domínio**  
    Justificativa: clareza de fronteiras e evolução incremental por pacote.
 
-## 4) Próxima fase prática (rodada 4 funcional focada em lacunas reais)
+## 4) Próxima fase prática (decisão pós rodadas 1, 2 e 3)
 
-### P0 — consolidar evidência das rodadas 1, 2 e 3
+### 4.1 O que já está maduro o bastante para sair da fila manual prioritária
 
-1. manter registros objetivos das rodadas em `docs/web-manual-validation-round-1.md`, `docs/web-manual-validation-round-2.md` e `docs/web-manual-validation-round-3.md`;
-2. preservar rastreabilidade dos bugs reais já corrigidos da rodada 1;
-3. refletir no checklist/expected-results os casos estáveis já validados e os inconclusivos.
+1. detecção principal de payloads estáveis já revalidada (`bip39`, `xpub/ypub`, `psbt` válida e inválida, lightning básica e address principal) sem regressões novas na rodada 2 e 3;
+2. transições rápidas de estado/UI com limpeza manual e auto-clear sensível já demonstraram consistência operacional suficiente;
+3. casos que já provaram estabilidade não devem continuar consumindo rodada manual repetitiva e passam a virar suíte automatizada de regressão.
 
-### P1 — cobrir lacunas funcionais prioritárias (sem abrir novas frentes)
+### 4.2 Lacunas reais restantes (priorizadas, sem abrir escopo)
 
-1. `zpub` com vetor garantido (positivo + negativo);
-2. casos adicionais de rede/testnet (address e extended pubkeys);
-3. watch-only mais profundo (além da detecção, sem integração completa externa);
-4. offline menos trivial em sequência de interações locais com foco em regressão funcional;
-5. UX de erro e feedback com foco em mensagens acionáveis;
-6. PSBT adicional (quase-válidas, limítrofes e comportamento de orientação na UI).
+- **P1**: watch-only além da detecção (fluxo guiado curto, com resultado útil local).
+- **P1**: UX pós-detecção para payload sensível/PSBT (mensagem acionável de próximos passos e falhas comuns).
+- **P2**: vetores canônicos faltantes para `zpub` e casos testnet confiáveis (positivo + negativo).
+- **P2**: casos PSBT limítrofes com estados/falhas mais ricos e expectativa explícita.
+- **P3**: QR scan real por câmera e fluxo signer externo real (após fechar P1/P2).
 
-### P2 — tratar inconsistências não bloqueantes
+### 4.3 Ordem proposta da próxima fase
 
-1. ajustar problemas de clareza/UX/heurística/experimental sem risco direto;
-2. manter backlog priorizado por impacto observado em execução real.
+1. **P0 (imediato):** converter para automação os cenários manuais que já ficaram estáveis nas rodadas 1, 2 e 3.
+2. **P1:** evoluir produto em watch-only real e UX pós-detecção sensível/PSBT (sem integração externa completa).
+3. **P2:** fechar vetores canônicos (`zpub`, testnet) e enriquecer matriz de falhas PSBT.
+4. **P3:** somente depois abrir QR por câmera e signer externo ponta-a-ponta.
+
+### 4.4 Próxima entrega concreta recomendada no repositório
+
+**Entrega escolhida agora:** _hardening de cobertura automatizada web para os fluxos já comprovados manualmente._
+
+Escopo objetivo desta entrega:
+
+1. criar/expandir testes automatizados de UI para os fluxos já maduros (detecção estável, `unknown` correto, auto-clear de `bip39/psbt`, reset por limpeza manual);
+2. codificar as sequências de transição rápida já validadas manualmente como regressão automatizada (`xpub -> ypub -> inválido`, `não sensível -> sensível`);
+3. registrar `zpub`/testnet como pendência explícita de vetor canônico (sem forçar falso bug);
+4. manter fora desta entrega: Android, Secure USB, QR câmera real e signer externo real.
 
 ## 5) Riscos técnicos ainda abertos
 
