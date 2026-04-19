@@ -1,1 +1,18 @@
-{\n  "name": "qr-engine",\n  "version": "1.0.0",\n  "dependencies": {\n    "crypto-js": "^4.2.0"\n  }\n}
+{
+  "name": "@bursh/qr-engine",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@bursh/core-domain": "file:../core-domain",
+    "@bursh/shared-types": "file:../shared-types",
+    "@scure/bip39": "^1.6.0",
+    "bitcoinjs-lib": "^6.1.7"
+  }
+}
