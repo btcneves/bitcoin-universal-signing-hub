@@ -13,7 +13,7 @@ const makeInvoice = (): string => {
     ]
   });
 
-  return sign(encoded, '1'.repeat(64));
+  return sign(encoded, '1'.repeat(64)).paymentRequest;
 };
 
 describe('lightning parser', () => {
