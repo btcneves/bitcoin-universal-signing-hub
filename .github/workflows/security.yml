@@ -71,4 +71,4 @@ jobs:
         run: pnpm install --frozen-lockfile=false
 
       - name: Audit production dependencies in all workspaces
-        run: pnpm -r --if-present audit --prod
+        run: pnpm audit --prod
