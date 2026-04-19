@@ -56,8 +56,6 @@ export const buildManualClearSnapshot = (scannerInput: string): DetectionSnapsho
 
   return {
     scannerInput: '',
-    detected: undefined,
-    errorMessage: undefined,
     autoClearedSensitiveData: false,
     lastActionMessage: hadVisibleInput
       ? 'Payload removido da área de teste manual.'
@@ -80,16 +78,12 @@ export const buildDetectionSnapshot = (
     return {
       scannerInput: isSensitive ? '' : scannerInput,
       detected: payload,
-      errorMessage: undefined,
-      autoClearedSensitiveData: isSensitive,
-      lastActionMessage: undefined
+      autoClearedSensitiveData: isSensitive
     };
   } catch (error) {
     return {
       scannerInput,
-      detected: undefined,
       autoClearedSensitiveData: false,
-      lastActionMessage: undefined,
       errorMessage: toUiError(error)
     };
   }
