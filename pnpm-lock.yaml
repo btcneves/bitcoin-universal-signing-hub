@@ -1,0 +1,18 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+  .: {}
+  apps/web: {}
+  packages/bitcoin-engine: {}
+  packages/core-domain: {}
+  packages/lightning-engine: {}
+  packages/network-adapters: {}
+  packages/psbt-engine: {}
+  packages/qr-engine: {}
+  packages/security-core: {}
+  packages/shared-types: {}
+  packages/ui: {}
