@@ -5,7 +5,8 @@
     "context": ".."
   },
   "remoteUser": "node",
-  "postCreateCommand": "pnpm install --frozen-lockfile=false",
+  "postCreateCommand": "pnpm run install:ci",
+  "postStartCommand": "echo 'Validation command: pnpm run validate:ci'",
   "customizations": {
     "vscode": {
       "extensions": [

@@ -15,9 +15,15 @@ const args = isPnpm
   ? ['-r', '--if-present', 'run', target]
   : ['run', target, '--workspaces', '--if-present'];
 
-const result = spawnSync(command, args, { stdio: 'inherit', shell: process.platform === 'win32' });
+console.log(`[run-workspaces] ${command} ${args.join(' ')}`);
+
+const result = spawnSync(command, args, {
+  stdio: 'inherit',
+  shell: process.platform === 'win32'
+});
+
 if (result.error) {
-  console.error(result.error.message);
+  console.error(`[run-workspaces] failed to spawn ${command}: ${result.error.message}`);
   process.exit(1);
 }
 
