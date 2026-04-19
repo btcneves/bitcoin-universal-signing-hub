@@ -96,6 +96,7 @@ body:
       options:
         - Sempre
         - Intermitente
+        - Não reproduzido novamente
     validations:
       required: true
 

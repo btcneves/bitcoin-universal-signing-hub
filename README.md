@@ -50,10 +50,10 @@ Referências:
 
 - checklist manual de validação web: `docs/web-functional-checklist.md`
 - resultados esperados por caso: `docs/web-functional-expected-results.md`
-- plano de execução da rodada manual: `docs/web-test-run-plan.md`
+- roteiro operacional da primeira rodada manual real: `docs/run-first-manual-web-validation.md`
 - template de evidência de teste manual: `docs/web-test-report-template.md`
 - fluxo para abertura de bugs funcionais web: `docs/web-bug-reporting-flow.md`
-- status funcional consolidado: `docs/project-status.md`
+- status funcional e marco de transição para execução manual: `docs/project-status.md`
 - prioridades da próxima fase: `docs/roadmap.md`
 
 ### Riscos e exceções atuais

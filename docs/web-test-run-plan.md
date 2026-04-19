@@ -4,6 +4,8 @@ Atualizado em: **2026-04-19**.
 
 Objetivo: executar uma rodada manual real, com evidência acionável para triagem e abertura dos primeiros bugs funcionais web.
 
+> Documento mantido por histórico. Para a execução operacional da primeira rodada, usar `docs/run-first-manual-web-validation.md`.
+
 ## 1) Pré-requisitos
 
 1. Ambiente local preparado e estável:
