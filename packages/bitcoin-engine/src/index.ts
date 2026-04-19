@@ -1,13 +1,17 @@
-import { pbkdf2Sync } from 'node:crypto';
+import { createHash, pbkdf2Sync } from 'node:crypto';
 import { HDKey } from '@scure/bip32';
-import { validateMnemonic, wordlist } from '@scure/bip39';
-import { base58check } from '@scure/base';
+import { validateMnemonic } from '@scure/bip39';
+import { wordlist } from '@scure/bip39/wordlists/english';
+import { createBase58check } from '@scure/base';
 import { payments } from 'bitcoinjs-lib';
 import type { MnemonicService, WalletService } from '@bursh/core-domain';
 import type { WalletDescriptor } from '@bursh/shared-types';
 
 const XPUB_VERSION = 0x0488b21e;
 const ZPUB_VERSION = 0x04b24746;
+const base58check = createBase58check((data: Uint8Array) =>
+  createHash('sha256').update(data).digest()
+);
 
 const setVersionBytes = (extendedKey: string, version: number): string => {
   const decoded = base58check.decode(extendedKey);
@@ -29,7 +33,7 @@ const normalizeToXpub = (extPub: string): string => {
     throw new Error('XPUB/ZPUB inválida');
   }
 
-  const version = ((decoded[0] << 24) | (decoded[1] << 16) | (decoded[2] << 8) | decoded[3]) >>> 0;
+  const version = new DataView(decoded.buffer, decoded.byteOffset, 4).getUint32(0, false);
   if (version === XPUB_VERSION) return extPub;
   if (version === ZPUB_VERSION) return setVersionBytes(extPub, XPUB_VERSION);
 
