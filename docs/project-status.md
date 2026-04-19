@@ -39,8 +39,10 @@ Atualizado em: **2026-04-19**.
   - sequências com limpeza/manual e auto-clear sem metadado residual;
   - coerência de fluxos locais em cenário offline mais completo.
 - MVP watch-only local após detecção de `xpub` / `ypub` / `zpub`:
-  - estado explícito de “watch-only pronto”;
-  - resumo acionável (tipo de extended pubkey, rede e modelo de conta esperado);
+  - estado explícito de “watch-only pronto” + etapa local de confirmação;
+  - resumo acionável (tipo de extended pubkey, rede, modelo de conta, política de script e escopo de derivação esperado);
+  - prévia local sem rede (descriptor redigido + caminhos iniciais de recebimento/troco);
+  - transição para estado “watch-only preparado (local)” sem misturar com fluxo sensível;
   - próximos passos de uso sem misturar com fluxo sensível.
 
 ### Parcial / experimental (existe estrutura, sem validação funcional fim a fim)
@@ -110,14 +112,15 @@ Atualizado em: **2026-04-19**.
 
 ### 4.4 Próxima entrega concreta recomendada no repositório
 
-**Entrega escolhida agora:** _MVP watch-only local pós-detecção de extended pubkey._
+**Entrega escolhida agora:** _watch-only local aprofundado pós-detecção de extended pubkey._
 
 Escopo objetivo desta entrega:
 
-1. expor estado explícito de prontidão watch-only quando houver `xpub` / `ypub` / `zpub`;
-2. mostrar resumo mínimo acionável (tipo, rede e modelo de conta esperado) com próximos passos claros;
-3. cobrir em testes automatizados o estado watch-only para `xpub`, `ypub` e payload inválido;
-4. manter fora desta entrega: Android, Secure USB, rede/sync real, QR câmera real e signer externo real.
+1. preservar estado explícito de prontidão watch-only quando houver `xpub` / `ypub` / `zpub`;
+2. aprofundar resumo local acionável (script policy, escopo de derivação e prévia de descriptor/caminhos sem rede);
+3. permitir avanço para estado local “watch-only preparado”;
+4. cobrir em testes automatizados o estado watch-only para `xpub`, `ypub`, payload inválido e novos feedbacks de preparação;
+5. manter fora desta entrega: Android, Secure USB, rede/sync real, QR câmera real e signer externo real.
 
 ## 5) Riscos técnicos ainda abertos
 

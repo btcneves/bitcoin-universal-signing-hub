@@ -40,7 +40,7 @@ Referências:
 ### Experimental / parcial
 
 - scanner QR em uso real (câmera/dispositivos heterogêneos)
-- watch-only completo (há MVP local pós-detecção para `xpub/ypub/zpub`, sem sincronização externa)
+- watch-only completo (fluxo local evoluiu para estado “preparado” com resumo de escopo/descriptor para `xpub/ypub/zpub`, ainda sem sincronização externa)
 - PSBT end-to-end (assinatura/finalização/transmissão reais)
 - integração real com carteiras externas
 - app Android

@@ -2,7 +2,12 @@ import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { Bip84WalletService } from '@bursh/bitcoin-engine';
 import { UniversalQrService } from '@bursh/qr-engine';
-import { buildDetectionSnapshot, buildManualClearSnapshot, buildWatchOnlySnapshot } from './App';
+import {
+  buildDetectionSnapshot,
+  buildManualClearSnapshot,
+  buildWatchOnlyPreparationSnapshot,
+  buildWatchOnlySnapshot
+} from './App';
 
 const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 const map = new Map([...alphabet].map((c, i) => [c, i]));
@@ -130,6 +135,10 @@ describe('app flow regressions', () => {
     expect(xpubWatchOnly.keyType).toBe('xpub');
     expect(xpubWatchOnly.network).toBe('mainnet');
     expect(xpubWatchOnly.accountModel).toContain('xpub');
+    expect(xpubWatchOnly.scriptPolicy).toContain('P2PKH');
+    expect(xpubWatchOnly.derivationScope).toContain("44'/0'/0'");
+    expect(xpubWatchOnly.descriptorPreview).toContain('pkh(');
+    expect(xpubWatchOnly.localPreviewPaths).toContain('/0/0 (recebimento)');
     expect(xpubWatchOnly.uiStateMessage).toContain('pronto');
 
     const ypubDetected = buildDetectionSnapshot(parser, validYpub)?.detected;
@@ -138,6 +147,9 @@ describe('app flow regressions', () => {
     expect(ypubWatchOnly.keyType).toBe('ypub');
     expect(ypubWatchOnly.network).toBe('mainnet');
     expect(ypubWatchOnly.accountModel).toContain('segwit aninhado');
+    expect(ypubWatchOnly.scriptPolicy).toContain('P2WPKH-in-P2SH');
+    expect(ypubWatchOnly.derivationScope).toContain("49'/0'/0'");
+    expect(ypubWatchOnly.descriptorPreview).toContain('sh(wpkh(');
     expect(ypubWatchOnly.uiStateMessage).toContain('pronto');
 
     const invalidDetected = buildDetectionSnapshot(parser, 'xpub-lixo-123')?.detected;
@@ -145,5 +157,27 @@ describe('app flow regressions', () => {
     expect(invalidDetected?.type).toBe('unknown');
     expect(invalidWatchOnly.ready).toBe(false);
     expect(invalidWatchOnly.uiStateMessage).toContain('indisponível');
+  });
+
+  it('cobre transição de feedback de preparação watch-only local', () => {
+    const xpubDetected = buildDetectionSnapshot(parser, validXpub)?.detected;
+    const watchOnly = buildWatchOnlySnapshot(xpubDetected);
+
+    const pending = buildWatchOnlyPreparationSnapshot(watchOnly, false);
+    expect(pending.prepared).toBe(false);
+    expect(pending.statusLabel).toContain('Pendente');
+    expect(pending.guidance).toContain('marque o perfil como preparado');
+
+    const prepared = buildWatchOnlyPreparationSnapshot(watchOnly, true);
+    expect(prepared.prepared).toBe(true);
+    expect(prepared.statusLabel).toContain('preparado');
+    expect(prepared.guidance).toContain('sem seed');
+
+    const unavailable = buildWatchOnlyPreparationSnapshot(
+      buildWatchOnlySnapshot(buildDetectionSnapshot(parser, 'invalido')?.detected),
+      true
+    );
+    expect(unavailable.prepared).toBe(false);
+    expect(unavailable.statusLabel).toContain('Não preparado');
   });
 });
