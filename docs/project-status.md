@@ -38,12 +38,16 @@ Atualizado em: **2026-04-19**.
   - `cHNidP8BAA`, `bc9...` e `lnxyz123` mantidos como `unknown`;
   - sequências com limpeza/manual e auto-clear sem metadado residual;
   - coerência de fluxos locais em cenário offline mais completo.
+- MVP watch-only local após detecção de `xpub` / `ypub` / `zpub`:
+  - estado explícito de “watch-only pronto”;
+  - resumo acionável (tipo de extended pubkey, rede e modelo de conta esperado);
+  - próximos passos de uso sem misturar com fluxo sensível.
 
 ### Parcial / experimental (existe estrutura, sem validação funcional fim a fim)
 
 - captura de QR por câmera/dispositivo real (atualmente entrada é por texto colado);
 - cards de ação na home (`Escanear QR`, `Fluxo watch-only`, `Fluxo sensível`, `Configurações`) são informativos, sem navegação nem fluxo transacional;
-- watch-only real (importação + derivação + visualização operacional);
+- watch-only real completo (importação + derivação + visualização operacional com sincronização externa);
 - fluxo PSBT completo (review, assinatura externa, roundtrip e broadcast);
 - validação de compatibilidade real com wallets/signers externos;
 - UX de mensagens e estados ainda mínima (sem assistentes, sem trilha guiada, sem etapas).
@@ -106,14 +110,14 @@ Atualizado em: **2026-04-19**.
 
 ### 4.4 Próxima entrega concreta recomendada no repositório
 
-**Entrega escolhida agora:** _hardening de cobertura automatizada web para os fluxos já comprovados manualmente._
+**Entrega escolhida agora:** _MVP watch-only local pós-detecção de extended pubkey._
 
 Escopo objetivo desta entrega:
 
-1. criar/expandir testes automatizados de UI para os fluxos já maduros (detecção estável, `unknown` correto, auto-clear de `bip39/psbt`, reset por limpeza manual);
-2. codificar as sequências de transição rápida já validadas manualmente como regressão automatizada (`xpub -> ypub -> inválido`, `não sensível -> sensível`);
-3. registrar `zpub`/testnet como pendência explícita de vetor canônico (sem forçar falso bug);
-4. manter fora desta entrega: Android, Secure USB, QR câmera real e signer externo real.
+1. expor estado explícito de prontidão watch-only quando houver `xpub` / `ypub` / `zpub`;
+2. mostrar resumo mínimo acionável (tipo, rede e modelo de conta esperado) com próximos passos claros;
+3. cobrir em testes automatizados o estado watch-only para `xpub`, `ypub` e payload inválido;
+4. manter fora desta entrega: Android, Secure USB, rede/sync real, QR câmera real e signer externo real.
 
 ## 5) Riscos técnicos ainda abertos
 
