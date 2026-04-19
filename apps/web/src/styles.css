@@ -149,6 +149,11 @@ button {
   font-weight: 600;
 }
 
+.watch-only-guidance {
+  margin: 0 0 10px;
+  color: #cddfff;
+}
+
 .watch-only-panel ul,
 .watch-only-panel ol {
   margin: 6px 0 0;
