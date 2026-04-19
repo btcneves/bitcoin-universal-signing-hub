@@ -118,15 +118,48 @@ const buildKeyFingerprint = (raw: string): string => {
   return `${raw.slice(0, 7)}...${raw.slice(-7)}`;
 };
 
-const decodeBase64ToBytes = (value: string): Uint8Array | undefined => {
-  const normalized = value.replace(/\s+/g, '').replace(/-/g, '+').replace(/_/g, '/');
-  if (!normalized) return undefined;
-  const unpadded = normalized.replace(/=+$/g, '');
-  if (!unpadded || unpadded.includes('=')) return undefined;
+const isAsciiWhitespace = (charCode: number): boolean =>
+  charCode === 0x20 || (charCode >= 0x09 && charCode <= 0x0d);
 
-  const missingPadding = unpadded.length % 4;
+const normalizeBase64Input = (value: string): string | undefined => {
+  let body = '';
+  let sawPadding = false;
+
+  for (let i = 0; i < value.length; i += 1) {
+    const char = value[i];
+    if (!char) return undefined;
+    const charCode = char.charCodeAt(0);
+    if (isAsciiWhitespace(charCode)) continue;
+
+    if (char === '=') {
+      sawPadding = true;
+      continue;
+    }
+
+    if (sawPadding) return undefined;
+    if (char === '-') {
+      body += '+';
+      continue;
+    }
+    if (char === '_') {
+      body += '/';
+      continue;
+    }
+    body += char;
+  }
+
+  if (!body) return undefined;
+  return body;
+};
+
+const decodeBase64ToBytes = (value: string): Uint8Array | undefined => {
+  const normalized = normalizeBase64Input(value);
+  if (!normalized) return undefined;
+
+  const missingPadding = normalized.length % 4;
   if (missingPadding === 1) return undefined;
-  const padded = missingPadding === 0 ? unpadded : `${unpadded}${'='.repeat(4 - missingPadding)}`;
+  const padded =
+    missingPadding === 0 ? normalized : `${normalized}${'='.repeat(4 - missingPadding)}`;
 
   const out: number[] = [];
   for (let i = 0; i < padded.length; i += 4) {
