@@ -1,36 +1,37 @@
-# Auditoria Técnica dos Módulos Criptográficos
+# Auditoria técnica dos módulos criptográficos
+
+Estado consolidado em abril/2026. Este documento registra o que já está implementado, o que depende de validação funcional real e o que ainda está fora de escopo imediato.
 
 ## BIP39
 
-- **Implementado:** validação de mnemonic pela wordlist oficial e derivação de seed via PBKDF2-HMAC-SHA512 (2048 rounds).  
-- **Garantia da biblioteca:** `@scure/bip39` valida checksum e normalização UTF-8/NFKD da frase.  
-- **Dependência de runtime:** confirmação de compatibilidade entre versões Node/WebCrypto em ambientes alvo.  
-- **Não coberto:** geração de mnemonic no app e testes end-to-end no browser.
+- **Implementado:** validação de mnemonic e derivação de seed (PBKDF2-HMAC-SHA512, 2048 rounds).
+- **Dependência de validação real:** comportamento completo em fluxos web reais (input/UX/limpeza em diferentes browsers).
+- **Pendente:** cobertura E2E completa de recuperação guiada por usuário final.
 
 ## BIP32/BIP84
 
-- **Implementado:** derivação de conta `m/84'/0'/account'`, conversão XPUB/ZPUB e derivação de endereço segwit por índice/change.  
-- **Garantia da biblioteca:** `@scure/bip32` implementa HD wallet BIP32; `bitcoinjs-lib` constrói output p2wpkh válido.  
-- **Dependência de runtime:** validação cruzada com vetores oficiais em ambientes de produção.  
-- **Não coberto:** testnet account variants, hardened edge-cases e import/export de descritores completos.
+- **Implementado:** derivação de conta `m/84'/0'/account'`, conversões de chave pública estendida e geração de endereço segwit.
+- **Dependência de validação real:** comparação ampliada com vetores e carteiras externas de referência.
+- **Pendente:** expansão de casos limítrofes e variantes adicionais de rede.
 
-## Validação de endereço
+## Validação de endereço Bitcoin
 
-- **Implementado:** detecção Base58Check e Bech32/Bech32m com validação de prefixo e tamanho de witness program.  
-- **Garantia da biblioteca:** `bitcoinjs-lib` oferece parse robusto para Base58 e Bech32.  
-- **Dependência de runtime:** testes com corpus ampliado de endereços inválidos/malformados.  
-- **Não coberto:** cobertura completa de versões futuras e networks customizadas.
+- **Implementado:** parse/validação de Base58Check e Bech32/Bech32m com checagens estruturais principais.
+- **Dependência de validação real:** corpus amplo de entradas inválidas/maliciosas em uso operacional.
+- **Pendente:** cobertura aprofundada para cenários avançados e futuras extensões.
 
 ## PSBT
 
-- **Implementado:** decode base64/hex e validação estrutural mínima (unsigned tx, inputs/outputs, witness/nonwitness utxo rules).  
-- **Garantia da biblioteca:** `bitcoinjs-lib` parseia PSBT conforme BIP174 em nível de estrutura.  
-- **Dependência de runtime:** assinatura/finalização real com hardware signer e nós Bitcoin para validar consenso.  
-- **Não coberto:** política de fees, script policies, SIGHASH restrictions e validação de rede/UTXO real.
+- **Implementado:** decode e validação estrutural mínima de payloads.
+- **Dependência de validação real:** assinatura/finalização/transmissão com stack externa real.
+- **Pendente:** fluxo end-to-end completo com integração prática de carteira/signer.
 
 ## BOLT11
 
-- **Implementado:** parse de invoice, validação de integridade completa e extração de campos principais.  
-- **Garantia da biblioteca:** `bolt11` valida assinatura/checksum e expõe tags normalizadas.  
-- **Dependência de runtime:** testes com invoices reais de provedores distintos e variações multi-part.  
-- **Não coberto:** política de roteamento, liquidez e pagamento Lightning (apenas parsing).
+- **Implementado:** parsing e validação de integridade de invoices.
+- **Dependência de validação real:** variação de invoices de múltiplos provedores e cenários adversariais.
+- **Pendente:** execução de pagamento/roteamento (não é foco da fase atual).
+
+## Conclusão objetiva
+
+A base criptográfica e de parsing está funcional para inspeção e evolução técnica controlada. O principal gap atual está na validação funcional end-to-end em ambiente real, não na ausência de estrutura base.
