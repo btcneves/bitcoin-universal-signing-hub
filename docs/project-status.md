@@ -48,6 +48,7 @@ Atualizado em: **2026-04-19**.
   - estado explícito de “PSBT pronta para revisão offline” mantendo auto-clear sensível;
   - painel local com formato detectado, tamanho, fingerprint curta e resumo técnico da unsigned tx (versão e contagem de entradas/saídas quando disponível);
   - checkpoint local explícito de revisão concluída, liberando estado “pronta para encaminhamento externo futuro” sem integrar assinatura real;
+  - etapa local adicional de preparação de encaminhamento (simulação offline) com token de referência e bloqueio explícito até checkpoint de revisão concluído;
   - separação explícita de etapas na UI: revisão local, exportação futura, assinatura externa futura e validação/finalização futura;
   - orientação objetiva de próximos passos sem assinatura, sem broadcast e sem integração externa nesta etapa.
 
@@ -118,13 +119,13 @@ Atualizado em: **2026-04-19**.
 
 ### 4.4 Próxima entrega concreta recomendada no repositório
 
-**Entrega escolhida agora:** _PSBT pós-revisão com checkpoint local de encaminhamento futuro (MVP local) após consolidação watch-only._
+**Entrega escolhida agora:** _PSBT pós-revisão com checkpoint local + preparação local de encaminhamento (simulação offline) para assinatura externa futura._
 
 Escopo objetivo desta entrega:
 
 1. preservar detecção de PSBT válida e rejeição de PSBT truncada/quase-PSBT;
 2. expor painel local de revisão offline com feedback explícito do que foi reconhecido;
-3. adicionar checkpoint local de revisão concluída para estado acionável sem integrar export/assinatura real;
+3. adicionar checkpoint local de revisão concluída e preparo local de encaminhamento para estado mais acionável sem integrar export/assinatura real;
 4. explicitar na UI a separação de etapas futuras (exportação, assinatura externa, validação/finalização);
 5. manter auto-clear sensível e isolamento do fluxo sensível;
 6. cobrir em testes automatizados o novo estado/painel PSBT e coexistência com regressões já cobertas;
