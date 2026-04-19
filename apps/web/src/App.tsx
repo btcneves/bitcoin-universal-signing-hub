@@ -12,28 +12,50 @@ const toUiError = (error: unknown): string => {
   return 'Falha ao processar payload';
 };
 
+const formatMetadata = (payload: ParsedQRPayload): string | undefined => {
+  if (!payload.metadata) return undefined;
+
+  const network = payload.metadata.network;
+  if (typeof network === 'string') {
+    return `Rede detectada: ${network}`;
+  }
+
+  return undefined;
+};
+
 export function App() {
   const [scannerInput, setScannerInput] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [detected, setDetected] = useState<ParsedQRPayload | undefined>();
+  const [autoClearedSensitiveData, setAutoClearedSensitiveData] = useState(false);
   const detector = useMemo(() => new UniversalQrService(), []);
+
+  const handleManualClear = () => {
+    setScannerInput('');
+    setDetected(undefined);
+    setErrorMessage(undefined);
+    setAutoClearedSensitiveData(false);
+  };
 
   useEffect(() => {
     if (!scannerInput) {
-      setDetected(undefined);
       return;
     }
 
     try {
       const payload = detector.detectPayload(scannerInput);
+      const isSensitive = SENSITIVE_TYPES.has(payload.type);
+
       setDetected(payload);
       setErrorMessage(undefined);
+      setAutoClearedSensitiveData(isSensitive);
 
-      if (SENSITIVE_TYPES.has(payload.type)) {
+      if (isSensitive) {
         setScannerInput('');
       }
     } catch (error) {
       setDetected(undefined);
+      setAutoClearedSensitiveData(false);
       setErrorMessage(toUiError(error));
     }
   }, [detector, scannerInput]);
@@ -45,6 +67,10 @@ export function App() {
 
       <section className="panel">
         <h2>Entrada Universal via QR</h2>
+        <p className="hint">
+          Cole um payload para testar a detecção local (seed BIP39, xpub/ypub/zpub, PSBT, invoice
+          Lightning ou endereço Bitcoin).
+        </p>
         <textarea
           value={scannerInput}
           onChange={(event) => setScannerInput(event.target.value)}
@@ -52,12 +78,30 @@ export function App() {
           rows={4}
         />
         <div className="actions-row">
-          <button type="button" onClick={() => setScannerInput('')}>
+          <button type="button" onClick={handleManualClear}>
             Limpar payload da memória
           </button>
         </div>
 
+        <p className="detection-state">
+          Estado da detecção:{' '}
+          {errorMessage
+            ? 'erro no parsing'
+            : detected
+              ? `payload reconhecido (${detected.type})`
+              : 'aguardando entrada'}
+        </p>
+
         {detected ? <p className="result">Tipo detectado: {detected.type}</p> : null}
+        {detected && formatMetadata(detected) ? (
+          <p className="metadata">{formatMetadata(detected)}</p>
+        ) : null}
+        {autoClearedSensitiveData ? (
+          <p className="sensitive-notice">
+            Payload sensível detectado ({detected?.type}). O campo de entrada foi limpo
+            automaticamente.
+          </p>
+        ) : null}
         {errorMessage ? <p className="error">{errorMessage}</p> : null}
       </section>
 

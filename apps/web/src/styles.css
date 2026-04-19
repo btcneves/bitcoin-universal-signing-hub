@@ -44,12 +44,35 @@ button {
   padding: 8px 12px;
 }
 
+.hint {
+  margin-top: 0;
+  color: #adc2ea;
+}
+
+.detection-state {
+  margin: 12px 0 6px;
+  color: #b5c8ed;
+}
+
 .result {
   color: #8ed1a8;
   font-weight: 700;
+  margin: 6px 0;
+}
+
+.metadata {
+  color: #a3d6ff;
+  margin: 4px 0;
+}
+
+.sensitive-notice {
+  color: #ffd27d;
+  font-weight: 700;
+  margin: 8px 0;
 }
 
 .error {
   color: #ffa0a0;
   font-weight: 700;
+  margin: 8px 0;
 }
