@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { sha256 } from '@noble/hashes/sha2';
 import { address as btcAddress, Psbt } from 'bitcoinjs-lib';
 import { validateMnemonic } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
@@ -7,8 +7,33 @@ import type { ParsedQRPayload } from '@bursh/shared-types';
 
 const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 const BASE58_MAP = new Map([...BASE58_ALPHABET].map((c, i) => [c, i]));
+const PSBT_MAGIC_HEX = '70736274ff';
+const PSBT_MAGIC_BASE64 = 'cHNidP8';
 
-const decodeBase58Check = (value: string): Buffer | undefined => {
+const bytesEqual = (a: Uint8Array, b: Uint8Array): boolean => {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+};
+
+const concatBytes = (a: Uint8Array, b: Uint8Array): Uint8Array => {
+  const out = new Uint8Array(a.length + b.length);
+  out.set(a, 0);
+  out.set(b, a.length);
+  return out;
+};
+
+const hexToBytes = (hex: string): Uint8Array => {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < bytes.length; i += 1) {
+    bytes[i] = Number.parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  }
+  return bytes;
+};
+
+const decodeBase58Check = (value: string): Uint8Array | undefined => {
   let num = 0n;
   for (const c of value) {
     const idx = BASE58_MAP.get(c);
@@ -18,19 +43,18 @@ const decodeBase58Check = (value: string): Buffer | undefined => {
 
   let hex = num.toString(16);
   if (hex.length % 2) hex = `0${hex}`;
-  let out = Buffer.from(hex, 'hex');
+
+  let out = hex.length > 0 ? hexToBytes(hex) : new Uint8Array([]);
   for (const c of value) {
-    if (c === '1') out = Buffer.concat([Buffer.from([0]), out]);
+    if (c === '1') out = concatBytes(new Uint8Array([0]), out);
     else break;
   }
   if (out.length < 4) return undefined;
 
   const payload = out.subarray(0, -4);
   const checksum = out.subarray(-4);
-  const digest = createHash('sha256')
-    .update(createHash('sha256').update(payload).digest())
-    .digest();
-  if (!digest.subarray(0, 4).equals(checksum)) return undefined;
+  const digest = sha256(sha256(payload));
+  if (!bytesEqual(digest.subarray(0, 4), checksum)) return undefined;
   return payload;
 };
 
@@ -39,7 +63,8 @@ const parseExtPub = (
 ): { type: 'xpub' | 'ypub' | 'zpub'; network: 'mainnet' | 'testnet' } | undefined => {
   const decoded = decodeBase58Check(value);
   if (!decoded || decoded.length !== 78) return undefined;
-  const version = decoded.readUInt32BE(0);
+  const view = new DataView(decoded.buffer, decoded.byteOffset, decoded.byteLength);
+  const version = view.getUint32(0, false);
   const table: Record<number, { type: 'xpub' | 'ypub' | 'zpub'; network: 'mainnet' | 'testnet' }> =
     {
       0x0488b21e: { type: 'xpub', network: 'mainnet' },
@@ -95,14 +120,12 @@ const validatePsbtPayload = (input: string): boolean => {
 
   try {
     if (/^[0-9a-fA-F]+$/.test(candidate)) {
-      const bytes = Buffer.from(candidate, 'hex');
-      if (bytes.subarray(0, 5).equals(Buffer.from([0x70, 0x73, 0x62, 0x74, 0xff]))) return true;
+      if (candidate.toLowerCase().startsWith(PSBT_MAGIC_HEX)) return true;
       Psbt.fromHex(candidate);
       return true;
     }
 
-    const bytes = Buffer.from(candidate, 'base64');
-    if (bytes.subarray(0, 5).equals(Buffer.from([0x70, 0x73, 0x62, 0x74, 0xff]))) return true;
+    if (candidate.startsWith(PSBT_MAGIC_BASE64)) return true;
     Psbt.fromBase64(candidate);
     return true;
   } catch {
