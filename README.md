@@ -49,6 +49,8 @@ Referências:
 ### Validação funcional desta fase
 
 - checklist manual de validação web: `docs/web-functional-checklist.md`
+- resultados esperados por caso: `docs/web-functional-expected-results.md`
+- plano de execução da rodada manual: `docs/web-test-run-plan.md`
 - template de evidência de teste manual: `docs/web-test-report-template.md`
 - fluxo para abertura de bugs funcionais web: `docs/web-bug-reporting-flow.md`
 - status funcional consolidado: `docs/project-status.md`
