@@ -2,17 +2,19 @@
 
 Atualizado em: **2026-04-19**.
 
-## 0) Marco de fase (execução manual parcial -> expansão funcional)
+## 0) Marco de fase (execução manual parcial -> expansão funcional orientada a lacunas)
 
-- **Concluído em 2026-04-19**: preparação de validação manual web (checklist, expected results, template de report, fluxo de bug e issue template) foi finalizada e a execução parcial já começou.
-- **Evidência real coletada em 2026-04-19**: houve bugs funcionais reais encontrados durante a rodada manual parcial e já corrigidos (falso positivo de Bech32 inválido e falso positivo de PSBT truncada).
-- **Estado atual**: app web está mais robusto que no início da rodada, com correções já refletidas no comportamento observado manualmente.
-- **Próxima etapa oficial**: sair de “preparação” para **expansão de validação funcional** baseada em evidência real.
+- **Concluído em 2026-04-19**: preparação de validação manual web (checklist, expected results, template de report, fluxo de bug e issue template) foi finalizada.
+- **Rodadas manuais parciais executadas em 2026-04-19**:
+  - rodada 1: encontrou bugs reais e acionáveis (falso positivo de Bech32 inválido e falso positivo de PSBT truncada), já corrigidos;
+  - rodada 2: consolidou evidência de robustez sem novos bugs.
+- **Estado atual**: detector e UI mostram consistência maior com evidência manual real em transições rápidas e payloads inválidos “parecidos”.
+- **Próxima etapa oficial**: rodada funcional focada nas lacunas ainda não cobertas (evitar repetir casos já estáveis).
 - **Regra de origem de bug nesta fase**: issue funcional deve nascer de execução documentada (não de especulação).
 
 ## 1) Estado funcional atual do produto web (`apps/web`)
 
-### Funcional hoje (confirmado no código)
+### Funcional hoje (confirmado no código + evidência manual)
 
 - home única renderiza título, subtítulo e painel de entrada universal;
 - textarea para colar payload manualmente;
@@ -25,7 +27,11 @@ Atualizado em: **2026-04-19**.
   - `bitcoin_address` (Base58 e Bech32 simplificado);
   - `unknown` para não reconhecidos;
 - limpeza automática do input quando payload sensível é detectado (`bip39` e `psbt`);
-- exibição de erro de parsing na UI quando ocorre exceção do detector.
+- exibição de erro de parsing na UI quando ocorre exceção do detector;
+- transições de estado recentemente confirmadas na rodada 2:
+  - `xpub -> ypub -> inválido` sem estado preso;
+  - `não sensível -> sensível` com limpeza correta e sem metadado residual;
+  - payloads inválidos semelhantes a PSBT/Lightning/address retornando `unknown`.
 
 ### Parcial / experimental (existe estrutura, sem validação funcional fim a fim)
 
@@ -69,21 +75,22 @@ Atualizado em: **2026-04-19**.
 4. **Monorepo por módulos de domínio**  
    Justificativa: clareza de fronteiras e evolução incremental por pacote.
 
-## 4) Próxima fase prática (expansão de validação funcional)
+## 4) Próxima fase prática (rodada 3 funcional focada)
 
-### P0 — consolidar rodada 1 parcial
+### P0 — consolidar evidência das rodadas 1 e 2
 
-1. manter registro objetivo da rodada em `docs/web-manual-validation-round-1.md`;
-2. garantir rastreabilidade dos bugs reais já corrigidos (Bech32 inválido e PSBT truncada);
-3. alinhar checklist/expected-results com os vetores efetivamente validados.
+1. manter registros objetivos das rodadas em `docs/web-manual-validation-round-1.md` e `docs/web-manual-validation-round-2.md`;
+2. preservar rastreabilidade dos bugs reais já corrigidos da rodada 1;
+3. refletir no checklist/expected-results os casos estáveis já validados e os inconclusivos.
 
-### P1 — expandir casos funcionais prioritários (sem abrir novas frentes)
+### P1 — cobrir lacunas funcionais prioritárias (sem abrir novas frentes)
 
-1. watch-only mais profundo (casos positivos e negativos de importação/estado);
-2. PSBT adicional (variações de formato, truncamento e quase-válidos);
-3. address/network adicional (mainnet/testnet e negativos de checksum/prefixo);
-4. UX de erro e feedback com foco em mensagens acionáveis;
-5. offline em fluxos menos triviais já existentes na UI atual.
+1. `zpub` com vetor garantido (positivo + negativo);
+2. casos adicionais de rede/testnet (address e extended pubkeys);
+3. offline menos trivial em sequência de interações locais;
+4. watch-only mais profundo (sem integração completa externa);
+5. UX de erro e feedback com foco em mensagens acionáveis;
+6. PSBT adicional (quase-válidas, limítrofes e comportamento de orientação na UI).
 
 ### P2 — tratar inconsistências não bloqueantes
 
@@ -104,4 +111,4 @@ Atualizado em: **2026-04-19**.
 
 ## 7) Critério para avanço de fase
 
-A expansão da próxima fase de produto avança com evidência reproduzível incremental da validação funcional web (incluindo a rodada 1 parcial já executada), mantendo pendências priorizadas por risco real.
+A expansão da próxima fase de produto avança com evidência reproduzível incremental da validação funcional web, com foco explícito nas lacunas restantes após as rodadas manuais parciais 1 e 2.
