@@ -15,6 +15,7 @@ Referência de execução: `docs/web-functional-checklist.md`.
 ### P1 — Próxima entrega de produto (curto prazo)
 
 - refinamento do fluxo QR/payload detection (entrada, feedback e robustez);
+- QR por câmera no web app (MVP) conectado ao mesmo pipeline de detecção já validado, com fallback para entrada manual quando câmera/permissão não estiverem disponíveis;
 - watch-only local pós-detecção evoluído com resumo de escopo/descriptor e estado “preparado” offline; próximo passo é UX navegável com export/import controlado sem rede;
 - PSBT UX pós-detecção já evoluída para revisão offline local + checkpoint local de revisão concluída + preparo local de encaminhamento (simulação offline) para assinatura externa futura; próximo passo é roundtrip local com integração externa mínima validada.
 

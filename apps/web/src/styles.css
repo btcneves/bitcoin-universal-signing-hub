@@ -49,6 +49,40 @@ textarea {
   margin-top: 10px;
 }
 
+.input-mode-row {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.camera-panel {
+  margin: 8px 0 10px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #2f4d7c;
+  background: #0f1b30;
+}
+
+.camera-preview {
+  width: 100%;
+  max-height: 240px;
+  border-radius: 8px;
+  background: #070b12;
+  border: 1px solid #2d3a4f;
+}
+
+.camera-state {
+  margin: 6px 0;
+  color: #9bc5ff;
+  font-weight: 600;
+}
+
+.camera-hint {
+  margin: 8px 0 0;
+  color: #bfd8ff;
+  font-size: 0.95rem;
+}
+
 button {
   border: 1px solid #2d3a4f;
   color: #eef3ff;
