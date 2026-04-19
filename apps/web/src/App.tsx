@@ -12,6 +12,14 @@ const SAMPLE_HINTS = [
   'Inválido (controle): texto-livre-123 sem formato conhecido'
 ];
 
+export type DetectionSnapshot = {
+  scannerInput: string;
+  errorMessage?: string;
+  detected?: ParsedQRPayload;
+  autoClearedSensitiveData: boolean;
+  lastActionMessage?: string;
+};
+
 const toUiError = (error: unknown): string => {
   if (error instanceof Error) {
     return `Falha ao processar payload (${error.name}). Revise formato e conteúdo do texto colado.`;
@@ -43,6 +51,44 @@ const getDetectionMaturity = (type?: ParsedQRPayload['type']): string => {
   return 'estável';
 };
 
+export const buildManualClearSnapshot = (scannerInput: string): DetectionSnapshot => {
+  const hadVisibleInput = scannerInput.trim().length > 0;
+
+  return {
+    scannerInput: '',
+    autoClearedSensitiveData: false,
+    lastActionMessage: hadVisibleInput
+      ? 'Payload removido da área de teste manual.'
+      : 'Área de teste já estava limpa.'
+  };
+};
+
+export const buildDetectionSnapshot = (
+  detector: UniversalQrService,
+  scannerInput: string
+): DetectionSnapshot | undefined => {
+  if (!scannerInput) {
+    return undefined;
+  }
+
+  try {
+    const payload = detector.detectPayload(scannerInput);
+    const isSensitive = SENSITIVE_TYPES.has(payload.type);
+
+    return {
+      scannerInput: isSensitive ? '' : scannerInput,
+      detected: payload,
+      autoClearedSensitiveData: isSensitive
+    };
+  } catch (error) {
+    return {
+      scannerInput,
+      autoClearedSensitiveData: false,
+      errorMessage: toUiError(error)
+    };
+  }
+};
+
 export function App() {
   const [scannerInput, setScannerInput] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
@@ -54,41 +100,27 @@ export function App() {
   const isInputEmpty = scannerInput.trim().length === 0;
 
   const handleManualClear = () => {
-    const hadVisibleInput = scannerInput.trim().length > 0;
-
-    setScannerInput('');
-    setDetected(undefined);
-    setErrorMessage(undefined);
-    setAutoClearedSensitiveData(false);
-    setLastActionMessage(
-      hadVisibleInput
-        ? 'Payload removido da área de teste manual.'
-        : 'Área de teste já estava limpa.'
-    );
+    const snapshot = buildManualClearSnapshot(scannerInput);
+    setScannerInput(snapshot.scannerInput);
+    setDetected(snapshot.detected);
+    setErrorMessage(snapshot.errorMessage);
+    setAutoClearedSensitiveData(snapshot.autoClearedSensitiveData);
+    setLastActionMessage(snapshot.lastActionMessage);
   };
 
   useEffect(() => {
-    if (!scannerInput) {
+    const snapshot = buildDetectionSnapshot(detector, scannerInput);
+    if (!snapshot) {
       return;
     }
 
-    try {
-      const payload = detector.detectPayload(scannerInput);
-      const isSensitive = SENSITIVE_TYPES.has(payload.type);
+    setDetected(snapshot.detected);
+    setErrorMessage(snapshot.errorMessage);
+    setAutoClearedSensitiveData(snapshot.autoClearedSensitiveData);
+    setLastActionMessage(snapshot.lastActionMessage);
 
-      setDetected(payload);
-      setErrorMessage(undefined);
-      setAutoClearedSensitiveData(isSensitive);
-      setLastActionMessage(undefined);
-
-      if (isSensitive) {
-        setScannerInput('');
-      }
-    } catch (error) {
-      setDetected(undefined);
-      setAutoClearedSensitiveData(false);
-      setLastActionMessage(undefined);
-      setErrorMessage(toUiError(error));
+    if (snapshot.scannerInput !== scannerInput) {
+      setScannerInput(snapshot.scannerInput);
     }
   }, [detector, scannerInput]);
 
