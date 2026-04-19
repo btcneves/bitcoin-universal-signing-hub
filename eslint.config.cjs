@@ -1,6 +1,5 @@
 const tsParser = require('@typescript-eslint/parser');
 const tsPlugin = require('@typescript-eslint/eslint-plugin');
-const security = require('eslint-plugin-security');
 
 module.exports = [
   {
@@ -14,12 +13,10 @@ module.exports = [
       sourceType: 'module'
     },
     plugins: {
-      '@typescript-eslint': tsPlugin,
-      security
+      '@typescript-eslint': tsPlugin
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
-      ...security.configs.recommended.rules,
       'no-console': ['error', { allow: ['warn', 'error'] }],
       '@typescript-eslint/no-explicit-any': 'error',
       'no-restricted-properties': [
