@@ -231,6 +231,14 @@ Campanha mínima pós-assinatura/hardening (baseline controlada):
 - cenários executados e registrados com `--scenario-id`: `HW-UEFI-01`, `HW-UEFI-02`, `HW-ALT-01`;
 - consolidação via `./infra/usb/scripts/summarize-hardware-validation.sh` com gate final **GO** para a matriz mínima.
 
+Status operacional mais recente (2026-04-20, UTC):
+
+- execução no ambiente atual bloqueada na etapa `pnpm usb:build-iso` por ausência de `live-build` (`lb`);
+- sem `iso/.sig/sha256sums.txt`, as verificações `sha256sum -c` e `pnpm usb:verify-iso` não puderam concluir;
+- consolidado atual em `infra/usb/dist/hardware-validation/summary.md` indica `NO-GO` com cobertura pendente de `HW-UEFI-01`, `HW-UEFI-02` e `HW-ALT-01`.
+
+Regra de release controlada nesta condição: **não criar tag/release** até repetir a rodada completa e obter `GO` no consolidado.
+
 Documentos de aceite profissional desta fase:
 
 - checklist + matriz mínima: `docs/secure-usb-hardware-validation.md`;
