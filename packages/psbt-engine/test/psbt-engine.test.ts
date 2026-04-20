@@ -68,4 +68,20 @@ describe('psbt-engine', () => {
       /Mnemonic inválido/i
     );
   });
+
+  it('rejeita UR inesperada ou truncada durante assinatura por QR', () => {
+    const svc = new DefaultPsbtService();
+    const mnemonic =
+      'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
+
+    expect(() => svc.signPsbtFromQrWithMnemonic('ur:crypto-seed/test', mnemonic)).toThrow(
+      /prefixo ur incompatível|prefixo incompatível/i
+    );
+    expect(() => svc.signPsbtFromQrWithMnemonic('ur:crypto-psbt/   ', mnemonic)).toThrow(
+      /payload ausente/i
+    );
+    expect(() => svc.signPsbtFromQrWithMnemonic('cHNidP8BAHECAAAAAQ==', mnemonic)).toThrow(
+      /deve começar com ur:crypto-psbt/i
+    );
+  });
 });

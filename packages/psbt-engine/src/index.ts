@@ -3,16 +3,32 @@ import { Bip39Service } from '@bursh/bitcoin-engine';
 import { Psbt } from 'bitcoinjs-lib';
 import type { ExternalSignerAdapter, PsbtService } from '@bursh/core-domain';
 
-const decodeMaybeUrPsbt = (payload: string): string => {
+const decodeMaybeUrPsbt = (payload: string, requireQrPsbtPrefix = false): string => {
   const trimmed = payload.trim();
+  if (!trimmed) {
+    throw new Error('PSBT inválida: payload vazio');
+  }
+
+  if (trimmed.startsWith('ur:') && !trimmed.startsWith('ur:crypto-psbt/')) {
+    throw new Error('PSBT inválida: prefixo UR incompatível (esperado ur:crypto-psbt/)');
+  }
+
+  if (requireQrPsbtPrefix && !trimmed.startsWith('ur:crypto-psbt/')) {
+    throw new Error('PSBT inválida: payload de assinatura QR deve começar com ur:crypto-psbt/');
+  }
+
   if (trimmed.startsWith('ur:crypto-psbt/')) {
-    return trimmed.slice('ur:crypto-psbt/'.length).trim();
+    const decoded = trimmed.slice('ur:crypto-psbt/'.length).trim();
+    if (!decoded) {
+      throw new Error('PSBT inválida: payload ausente após prefixo ur:crypto-psbt/');
+    }
+    return decoded;
   }
   return trimmed;
 };
 
-const decodePsbt = (input: string): Psbt => {
-  const trimmed = decodeMaybeUrPsbt(input);
+const decodePsbt = (input: string, requireQrPsbtPrefix = false): Psbt => {
+  const trimmed = decodeMaybeUrPsbt(input, requireQrPsbtPrefix);
   try {
     if (/^[0-9a-fA-F]+$/.test(trimmed)) {
       return Psbt.fromHex(trimmed);
@@ -121,7 +137,10 @@ export class DefaultPsbtService implements PsbtService {
     passphrase = '',
     options?: { finalize?: boolean }
   ): { signedPsbtQr: string; signedPsbtBase64: string; txHex?: string } {
-    const signed = this.signPsbtWithMnemonic(psbtQrPayload, mnemonic, passphrase, options);
+    const signed = this.signPsbtWithMnemonic(psbtQrPayload, mnemonic, passphrase, {
+      ...options,
+      requireQrPsbtPrefix: true
+    });
     return {
       ...signed,
       signedPsbtQr: encodePsbtForQr(signed.signedPsbtBase64)
@@ -132,9 +151,9 @@ export class DefaultPsbtService implements PsbtService {
     psbtInput: string,
     mnemonic: string,
     passphrase = '',
-    options?: { finalize?: boolean }
+    options?: { finalize?: boolean; requireQrPsbtPrefix?: boolean }
   ): { signedPsbtBase64: string; txHex?: string } {
-    const psbt = decodePsbt(psbtInput);
+    const psbt = decodePsbt(psbtInput, options?.requireQrPsbtPrefix === true);
     assertStructuralRules(psbt);
 
     const bip39 = new Bip39Service();

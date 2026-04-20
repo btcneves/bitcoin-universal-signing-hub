@@ -474,3 +474,34 @@ Dependências recomendadas no host/VM para o fluxo QR:
 - `qrencode` (geração);
 - `zbarimg` (leitura por imagem);
 - `zbarcam` (leitura por câmera).
+
+## Fluxo QR robusto (baseline de release)
+
+Para fechar baseline confiável, cada cenário (`HW-UEFI-01`, `HW-UEFI-02`, `HW-ALT-01`) deve executar:
+
+1. `pnpm usb:qr:generate` para `xpub`, `psbt`, `seed` e `passphrase`;
+2. `pnpm usb:qr:scan --expect ...` validando prefixo correto e rejeitando prefixo UR errado;
+3. `init-hardware-validation-record.sh --scenario-id ...` registrando handoff QR;
+4. `summarize-hardware-validation.sh` confirmando gate final `GO`.
+
+Exemplo rápido:
+
+```bash
+pnpm usb:qr:generate -- --type xpub --payload "xpub..." --out /tmp/xpub.png
+pnpm usb:qr:scan -- --image /tmp/xpub.png --expect xpub
+
+pnpm usb:qr:generate -- --type psbt --payload "cHNid..." --out /tmp/psbt.png
+pnpm usb:qr:scan -- --image /tmp/psbt.png --expect psbt
+```
+
+Erros esperados e interpretação:
+
+- `prefixo incompatível`: QR `ur:...` do tipo errado (ex.: `crypto-seed` quando esperava `crypto-psbt`);
+- `payload ausente`: UR truncada (`ur:crypto-.../` sem conteúdo);
+- dependências ausentes (`qrencode`, `zbarimg`, `zbarcam`): instalar via `sudo apt-get install -y qrencode zbar-tools`.
+
+Alertas operacionais obrigatórios:
+
+- seed/passphrase não devem ser digitadas em dispositivos online;
+- manter operação em ambiente offline/amnésico;
+- não usar USB/rede para transportar seed, passphrase, xpub ou PSBT entre zonas.

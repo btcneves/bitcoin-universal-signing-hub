@@ -72,6 +72,8 @@ mandatory_items = {
     "kiosk",
     "app local (127.0.0.1:4173)",
     "smoke test (smoke-test-bursh-live.sh)",
+    "qr handoff xpub (generate + scan --expect xpub)",
+    "qr handoff psbt (generate + scan --expect psbt)",
     "evidence collection (collect-bursh-boot-evidence.sh)",
 }
 

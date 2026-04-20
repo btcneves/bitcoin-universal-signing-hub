@@ -113,6 +113,8 @@ cat > "$OUTPUT_FILE" <<EOF_RECORD
 | Kiosk | TBD | |
 | App local (127.0.0.1:4173) | TBD | |
 | Smoke test (smoke-test-bursh-live.sh) | TBD | |
+| QR handoff xpub (generate + scan --expect xpub) | TBD | |
+| QR handoff PSBT (generate + scan --expect psbt) | TBD | |
 | BURSH-DATA policy (optional by scenario) | TBD | |
 | Evidence collection (collect-bursh-boot-evidence.sh) | TBD | |
 
