@@ -2,12 +2,13 @@
 
 Atualizado em: **2026-04-20**.
 
-## 0) Marco de fase (VM automatizada concluída -> operação em hardware real)
+## 0) Marco de fase (aceite profissional mínimo em hardware real)
 
 - **Concluído até 2026-04-20**: build ISO + boot em VM + validação automatizada PASS/FAIL com artefatos (`validate-vm-boot.sh`) já está operacional.
-- **Concluído nesta entrega**: fluxo padronizado para pendrive físico (`prepare-physical-usb.sh`) e coleta mínima de evidência pós-boot em hardware (`collect-bursh-boot-evidence.sh`).
-- **Estado atual**: lacuna VM -> hardware está fechada com trilha reproduzível e checklist objetivo de PASS/FAIL.
-- **Foco imediato**: executar rodadas em hardware real heterogêneo e consolidar evidências para gate de hardening/release readiness.
+- **Concluído até 2026-04-20 (estado anterior)**: fluxo padronizado para pendrive físico (`prepare-physical-usb.sh`) e coleta mínima de evidência pós-boot em hardware (`collect-bursh-boot-evidence.sh`).
+- **Concluído nesta entrega**: camada mínima profissional de aceite real com checklist formal `PASS/FAIL/BLOCKED`, matriz mínima obrigatória, template de evidência e script de inicialização de registro (`init-hardware-validation-record.sh`).
+- **Estado atual**: lacuna VM -> hardware foi convertida em processo de aceite objetivo e consolidável por execução.
+- **Foco imediato**: rodar matriz mínima obrigatória e fechar gate funcional para iniciar fase de hardening.
 - **Regra ativa**: sem abrir escopo para features web, signing real, backend ou Android nesta fase.
 
 ## 1) Estado funcional atual do produto web (`apps/web`)
@@ -125,9 +126,9 @@ Atualizado em: **2026-04-20**.
 
 ### O que ainda falta para chamar de “funcional de verdade” (v1 bootável)
 
-- hardening adicional de produção (cadeia de confiança/assinatura da imagem e lockdown incremental);
-- rodada estruturada de teste em hardware real heterogêneo com evidência consolidada;
-- critérios formais de aceite para release Secure USB além do smoke test de fundação.
+- executar e fechar a matriz mínima obrigatória em hardware real heterogêneo com evidência consolidada (`docs/secure-usb-hardware-validation.md`);
+- consolidar gate de release readiness por execução (`docs/secure-usb-release-readiness.md`);
+- depois disso, iniciar hardening incremental de produção (cadeia de confiança/assinatura da imagem e lockdown incremental).
 
 ## 3) Decisões técnicas consolidadas
 

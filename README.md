@@ -134,7 +134,7 @@ Veja opções com Docker, Dev Container e bootstrap npm em `docs/reproducibility
 
 ### Secure USB Edition — Secure USB Quick Start
 
-Fluxo mínimo profissional (ISO -> VM -> pendrive físico):
+Fluxo mínimo profissional (ISO -> VM -> pendrive físico -> registro de aceite):
 
 1. gerar ISO;
 2. validar boot automatizado em VM (PASS/FAIL + artefatos);
@@ -165,6 +165,23 @@ Critério objetivo de PASS em hardware:
 - `BURSH-DATA` montado apenas para `watch-only` e `config` (quando usado).
 
 Guia completo e checklist operacional: `infra/usb/README.md`.
+
+Após validar no hardware real, inicialize o registro padronizado da execução:
+
+```bash
+./infra/usb/scripts/init-hardware-validation-record.sh \
+  --tester "nome" \
+  --machine "maquina-a" \
+  --iso "infra/usb/dist/bursh-secure-usb-amd64.iso" \
+  --boot-mode "UEFI" \
+  --with-bursh-data
+```
+
+Documentos de aceite profissional desta fase:
+
+- checklist + matriz mínima: `docs/secure-usb-hardware-validation.md`;
+- template de registro: `docs/templates/secure-usb-hardware-validation-record.md`;
+- gate de release readiness (curto): `docs/secure-usb-release-readiness.md`.
 
 ## Validação e governança técnica
 

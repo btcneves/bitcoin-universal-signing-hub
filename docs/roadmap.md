@@ -6,18 +6,19 @@ Roadmap prático para evoluir a Secure USB Edition sem expandir escopo.
 
 Referências operacionais: `README.md` e `infra/usb/README.md`.
 
-### P0 — Obrigatório agora (Secure USB em pendrive/hardware)
+### P0 — Obrigatório agora (aceite mínimo profissional em hardware)
 
 - executar fluxo curto e reproduzível: ISO -> `validate-vm-boot.sh` -> `prepare-physical-usb.sh` -> boot físico;
-- aplicar checklist objetivo de PASS/FAIL em hardware real;
-- coletar evidência mínima pós-boot com `collect-bursh-boot-evidence.sh`;
-- consolidar artefatos para cada execução de hardware (logs + mounts + status de serviços).
+- aplicar checklist formal com critérios `PASS/FAIL/BLOCKED` (`docs/secure-usb-hardware-validation.md`);
+- rodar matriz mínima obrigatória (UEFI sem/ com `BURSH-DATA` + hardware alternativo);
+- gerar registro-base por execução com `init-hardware-validation-record.sh`;
+- coletar evidência mínima pós-boot com `collect-bursh-boot-evidence.sh` e registrar caminho do `.tar.gz`.
 
-### P1 — Próximo passo após hardware validado (hardening / release readiness)
+### P1 — Próximo passo após aceite mínimo (hardening / release readiness)
 
 - hardening incremental da live image (defaults mais restritivos e redução de superfície);
-- definir critérios formais de aceite para release Secure USB;
-- executar matriz mínima de compatibilidade de hardware (UEFI/BIOS e perfis de máquina).
+- ampliar matriz de compatibilidade para candidatos de release;
+- evoluir gate funcional para gate de release externo completo.
 
 ### P2 — Release readiness ampliado (sem abrir feature nova)
 
