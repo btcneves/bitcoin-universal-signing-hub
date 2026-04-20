@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { Psbt } from 'bitcoinjs-lib';
-import { DefaultPsbtService, QrExternalSignerAdapter } from '../src/index';
+import {
+  DefaultPsbtService,
+  QrExternalSignerAdapter,
+  decodePsbtFromQr,
+  encodePsbtForQr
+} from '../src/index';
 
 const makeValidPsbt = (): string => {
   const psbt = new Psbt();
@@ -37,5 +42,20 @@ describe('psbt-engine', () => {
     const psbt = makeValidPsbt();
     const encoded = adapter.exportPsbtToQr(psbt);
     expect(adapter.importSignedPsbtFromQr(encoded)).toBe(psbt);
+  });
+
+  it('normaliza envelope UR para ida/volta de PSBT assinada', () => {
+    const psbt = makeValidPsbt();
+    const qrPayload = encodePsbtForQr(psbt);
+    expect(qrPayload.startsWith('ur:crypto-psbt/')).toBe(true);
+    expect(decodePsbtFromQr(qrPayload)).toBe(psbt);
+  });
+
+  it('limpa seed da memória em tentativas de assinatura falhas', () => {
+    const svc = new DefaultPsbtService();
+    const invalidMnemonic = 'abandon abandon abandon';
+    expect(() => svc.signPsbtWithMnemonic(makeValidPsbt(), invalidMnemonic)).toThrow(
+      /Mnemonic inválido/i
+    );
   });
 });

@@ -403,3 +403,50 @@ Rodar após boot (VM e hardware), antes de anexar evidência final:
 - `curl -I http://127.0.0.1:4173` (resposta HTTP local);
 - `findmnt -no OPTIONS /var/lib/bursh/watch-only` e `/var/lib/bursh/config` (quando `BURSH-DATA` existir, confirmar `nosuid,nodev,noexec`);
 - `sudo /usr/local/bin/smoke-test-bursh-live.sh` (PASS).
+
+## Fluxo QR air-gapped (xpub + PSBT) sem USB de dados
+
+Para manter o princípio offline-first, a troca entre dispositivo offline e watch-only deve ocorrer por QR.
+
+### 1) Gerar QR do xpub no ambiente offline
+
+```bash
+./infra/usb/scripts/generate-qr-payload.sh \
+  --payload "ur:crypto-hdkey/<xpub-ou-zpub>" \
+  --out /tmp/watch-only-xpub.png
+```
+
+### 2) Importar xpub no dispositivo watch-only
+
+- escanear `watch-only-xpub.png` com a wallet watch-only;
+- criar carteira somente observação (sem seed, sem passphrase);
+- gerar PSBT no watch-only para o pagamento.
+
+### 3) Exportar PSBT por QR e assinar offline
+
+No watch-only, exibir a PSBT como QR (`ur:crypto-psbt/...`) e no offline:
+
+```bash
+./infra/usb/scripts/scan-qr-payload.sh --camera
+# ou
+./infra/usb/scripts/scan-qr-payload.sh --image /tmp/psbt.png
+```
+
+Após assinatura offline, gerar QR da PSBT assinada:
+
+```bash
+./infra/usb/scripts/generate-qr-payload.sh \
+  --payload "ur:crypto-psbt/<psbt-assinada-base64>" \
+  --out /tmp/psbt-signed.png
+```
+
+### 4) Broadcast no dispositivo watch-only
+
+- importar o QR assinado no watch-only;
+- finalizar/transmitir para a rede no dispositivo online.
+
+### Regras de segurança desse fluxo
+
+- não salvar seed/passphrase em arquivos, histórico shell ou partição persistente;
+- não copiar PSBT/xpub por pendrive entre ambientes;
+- chaves privadas permanecem somente no dispositivo offline.

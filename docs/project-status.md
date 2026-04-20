@@ -12,9 +12,11 @@ Atualizado em: **2026-04-20**.
 - **Concluído nesta entrega (cadeia de confiança mínima)**: build da ISO com assinatura GPG `.sig`, script de verificação offline e documentação de distribuição da chave pública.
 - **Concluído nesta entrega (distribuição autenticada + validação consolidada)**: processo formal para publicar chave pública junto da release autenticada (com política de rotação) e campanha da matriz mínima (`HW-UEFI-01`, `HW-UEFI-02`, `HW-ALT-01`) consolidada em gate `GO`.
 - **Concluído nesta entrega (integridade de artefatos)**: geração automática de `sha256sums.txt` no pipeline de build da ISO, com verificação explícita de checksums antes da validação de assinatura/execução.
+- **Concluído nesta entrega (utilidade real offline)**: módulo de verificação de seed BIP39 em memória (xpub + endereços multi-moeda), confirmação opcional de passphrase por equivalência de xpub e helpers de QR para watch-only.
+- **Concluído nesta entrega (PSBT real por QR)**: serviço de assinatura PSBT com mnemonic/passphrase em RAM-only, além de scripts de import/export por QR (câmera/imagem) sem uso de pendrive para handoff de dados.
 - **Estado atual**: fundação funcional + hardening mínimo ativo para início de fase final de release controlada.
 - **Foco imediato**: baseline final de release controlada (sem expansão de escopo), mantendo matriz mínima `GO` após inclusão de checksums na trilha de confiança.
-- **Regra ativa**: sem abrir escopo para features web, signing real, backend ou Android nesta fase.
+- **Regra ativa**: sem abrir escopo para backend ou Android; Secure USB Edition permanece foco único.
 
 ## 1) Estado funcional atual do produto web (`apps/web`)
 

@@ -118,3 +118,12 @@ Next:
      sudo /usr/local/bin/smoke-test-bursh-live.sh
      sudo /usr/local/bin/collect-bursh-boot-evidence.sh
 DONE
+
+cat <<'QRNOTE'
+
+[secure-usb] Nota de segurança operacional:
+  Para xpub/PSBT use fluxo air-gapped por QR (câmera/imagem), sem transferência por pendrive.
+  Scripts úteis:
+    ./infra/usb/scripts/generate-qr-payload.sh
+    ./infra/usb/scripts/scan-qr-payload.sh
+QRNOTE
