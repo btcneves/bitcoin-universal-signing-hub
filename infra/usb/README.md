@@ -122,6 +122,25 @@ Artefatos gerados:
 - `smoke-test.txt` (saída do smoke test);
 - arquivo compactado `.tar.gz` pronto para anexar em evidência.
 
+## Aceite profissional mínimo (hardware real)
+
+- checklist formal + critérios `PASS/FAIL/BLOCKED`: `docs/secure-usb-hardware-validation.md`;
+- matriz mínima obrigatória de execução: `docs/secure-usb-hardware-validation.md`;
+- template padronizado de evidência: `docs/templates/secure-usb-hardware-validation-record.md`;
+- gate de readiness: `docs/secure-usb-release-readiness.md`.
+
+Inicializar registro-base da execução (host):
+
+```bash
+./infra/usb/scripts/init-hardware-validation-record.sh \
+  --tester "nome" \
+  --machine "maquina-a" \
+  --iso "infra/usb/dist/bursh-secure-usb-amd64.iso" \
+  --boot-mode "UEFI"
+```
+
+Preencha o arquivo gerado em `infra/usb/dist/hardware-validation/` com resultados do checklist e caminho do `.tar.gz` coletado no boot físico.
+
 ## Dependências mínimas no host
 
 - `live-build` para gerar ISO;
