@@ -37,7 +37,10 @@ fi
 
 cp "$SOURCE_ISO" "$DIST_DIR/$OUTPUT_ISO_NAME"
 
+"$USB_DIR/scripts/sign-iso.sh" "$DIST_DIR/$OUTPUT_ISO_NAME"
+
 cat <<MSG
-[secure-usb] ISO generated:
-  $DIST_DIR/$OUTPUT_ISO_NAME
+[secure-usb] ISO generated and signed:
+  ISO: $DIST_DIR/$OUTPUT_ISO_NAME
+  SIG: $DIST_DIR/$OUTPUT_ISO_NAME.sig
 MSG
