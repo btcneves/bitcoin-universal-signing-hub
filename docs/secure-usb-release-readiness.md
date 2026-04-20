@@ -65,3 +65,29 @@ Consolidação: `summarize-hardware-validation.sh` com resultado final **GO** pa
 ## 6) Próximo passo imediato
 
 Com gate `GO` desta entrega, o projeto segue para preparação da baseline final de release da Secure USB Edition (sem abrir escopo de backend/Android/novas features).
+
+## 7) Execução final da matriz mínima (status atual: 2026-04-20)
+
+Execução realizada neste repositório para confirmar o gate final antes de tag:
+
+1. `pnpm usb:build-iso`
+   - **BLOCKED** no ambiente atual por dependência ausente (`lb`, pacote `live-build`).
+2. `sha256sum -c infra/usb/dist/sha256sums.txt`
+   - **FAIL** porque `sha256sums.txt` não existe sem build da ISO.
+3. `pnpm usb:verify-iso`
+   - **FAIL** porque `infra/usb/dist/bursh-secure-usb-amd64.iso` não foi gerada.
+4. `pnpm usb:summary`
+   - executado com sucesso, porém sem registros (`Total runs found: 0`) e gate consolidado **NO-GO**.
+
+Resultado objetivo desta rodada:
+
+- matriz mínima obrigatória (`HW-UEFI-01`, `HW-UEFI-02`, `HW-ALT-01`) permanece **sem execução**;
+- gate final permanece **NO-GO**;
+- **não preparar tag/release** até reexecutar build assinado + checksums e completar a matriz com evidências.
+
+Checklist de desbloqueio (sem ampliar escopo):
+
+- instalar `live-build` no host executor;
+- gerar `iso + .sig + sha256sums.txt` com `pnpm usb:build-iso`;
+- executar validação por cenário com `init-hardware-validation-record.sh`, `smoke-test-bursh-live.sh` e `collect-bursh-boot-evidence.sh`;
+- reconsolidar em `pnpm usb:summary` e liberar tag apenas se resultado final for **GO**.
