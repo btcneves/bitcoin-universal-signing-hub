@@ -9,8 +9,9 @@ Atualizado em: **2026-04-20**.
 - **Concluído nesta entrega**: camada mínima profissional de aceite real com checklist formal `PASS/FAIL/BLOCKED`, matriz mínima obrigatória, template de evidência e script de inicialização de registro (`init-hardware-validation-record.sh`).
 - **Concluído nesta entrega (incremental)**: consolidação operacional das rodadas físicas com `infra/usb/scripts/summarize-hardware-validation.sh` + campo explícito de cenário da matriz no registro (`--scenario-id`).
 - **Concluído nesta entrega (hardening inicial)**: primeira camada mínima de release hardening aplicada no runtime Secure USB (kiosk mais restritivo, `bursh-web.service` com sandbox systemd e persistência opcional com bind mounts endurecidos).
+- **Concluído nesta entrega (cadeia de confiança mínima)**: build da ISO com assinatura GPG `.sig`, script de verificação offline e documentação de distribuição da chave pública.
 - **Estado atual**: fundação funcional + hardening mínimo ativo para início de fase final de release controlada.
-- **Foco imediato**: rodar validação pós-hardening em VM/hardware e consolidar evidências sem regressão no gate `GO`/`NO-GO`.
+- **Foco imediato**: validar hardening + assinatura da ISO na prática (VM e hardware), consolidando evidências sem regressão no gate `GO`/`NO-GO`.
 - **Regra ativa**: sem abrir escopo para features web, signing real, backend ou Android nesta fase.
 
 ## 1) Estado funcional atual do produto web (`apps/web`)
@@ -137,7 +138,7 @@ Atualizado em: **2026-04-20**.
 
 - executar e fechar a matriz mínima obrigatória em hardware real heterogêneo com evidência consolidada (`docs/secure-usb-hardware-validation.md`);
 - consolidar gate de release readiness por execução (`docs/secure-usb-release-readiness.md`);
-- depois disso, iniciar hardening incremental de produção (cadeia de confiança/assinatura da imagem e lockdown incremental).
+- implementar cadeia mínima de confiança da imagem (assinatura/verificação offline da ISO) sem quebrar o fluxo ISO -> VM -> pendrive.
 
 ## 3) Decisões técnicas consolidadas
 

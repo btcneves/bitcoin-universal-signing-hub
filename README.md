@@ -131,6 +131,9 @@ Veja opções com Docker, Dev Container e bootstrap npm em `docs/reproducibility
 - `pnpm audit --prod --ignore GHSA-848j-6mx2-7j84`
 - `pnpm usb:prepare-web`
 - `pnpm usb:build-iso`
+- `pnpm usb:generate-signing-key`
+- `pnpm usb:sign-iso`
+- `pnpm usb:verify-iso`
 - `pnpm usb:vm`
 
 ### Secure USB Edition — Secure USB Quick Start
@@ -145,7 +148,15 @@ Fluxo mínimo profissional (ISO -> VM -> pendrive físico -> registro de aceite)
 Comandos:
 
 ```bash
+# primeira execução: gerar par de chaves dedicado para assinatura de ISO
+pnpm usb:generate-signing-key
+
+# build agora gera ISO + assinatura .sig automaticamente
 pnpm usb:build-iso
+
+# verificação offline obrigatória antes de VM/pendrive
+pnpm usb:verify-iso
+
 ./infra/usb/scripts/validate-vm-boot.sh
 sudo ./infra/usb/scripts/prepare-physical-usb.sh /dev/sdX --with-bursh-data
 ```
@@ -166,6 +177,12 @@ Critério objetivo de PASS em hardware:
 - `BURSH-DATA` montado apenas para `watch-only` e `config` (quando usado).
 
 Guia completo e checklist operacional: `infra/usb/README.md`.
+
+Distribuição/verificação de confiança da ISO:
+
+- chave pública de release: `infra/usb/keys/bursh-secure-usb-signing-public.asc`;
+- assinatura gerada no build: `infra/usb/dist/bursh-secure-usb-amd64.iso.sig`;
+- verificação offline: `./infra/usb/scripts/verify-iso.sh <iso> <iso.sig> [public-key.asc]`.
 
 Após validar no hardware real, inicialize o registro padronizado da execução:
 
@@ -211,5 +228,6 @@ Documentos de aceite profissional desta fase:
 ## Roadmap resumido
 
 1. Validar fluxos funcionais reais (scanner, PSBT end-to-end, integração com carteira externa).
-2. Continuar hardening incremental de release (compatibilidade ampla em hardware + cadeia de confiança da imagem).
-3. Avançar entregáveis de plataforma (Android e Secure USB) após validação funcional web.
+2. Consolidar cadeia mínima de confiança da ISO (assinatura + verificação offline) e validar sem regressão em VM/hardware.
+3. Continuar hardening incremental de release (compatibilidade ampla em hardware).
+4. Avançar entregáveis de plataforma (Android e Secure USB) após validação funcional web.

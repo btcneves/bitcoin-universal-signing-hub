@@ -9,6 +9,7 @@ Objetivo desta fase: fechar a lacuna entre validação em VM e uso real em pendr
 - evidência de boot em ambiente virtual já existe;
 - fluxo pendrive físico + hardware real operacional;
 - **hardening mínimo inicial aplicado** (defaults mais restritivos no runtime live/kiosk).
+- **cadeia mínima de confiança de release iniciada** (assinatura GPG da ISO + verificação offline).
 
 ## Hardening mínimo aplicado nesta fase
 
@@ -30,7 +31,19 @@ Escopo deliberadamente pequeno e de alto impacto, sem abrir cadeia de produto no
 
 ## Fluxo único recomendado (ISO -> VM -> pendrive -> hardware)
 
-### 1) Build da ISO
+### 1) Gerar chave de assinatura (primeira execução)
+
+```bash
+pnpm usb:generate-signing-key
+```
+
+Arquivos gerados:
+
+- `infra/usb/keys/bursh-secure-usb-signing-public.asc`
+- `infra/usb/keys/release-signing-key-id.txt`
+- `infra/usb/keys/offline-signing/` (privado, não versionado)
+
+### 2) Build da ISO (assinatura automática)
 
 ```bash
 pnpm usb:build-iso
@@ -39,8 +52,26 @@ pnpm usb:build-iso
 Saída esperada:
 
 - `infra/usb/dist/bursh-secure-usb-amd64.iso`
+- `infra/usb/dist/bursh-secure-usb-amd64.iso.sig`
 
-### 2) Gate obrigatório em VM (não pular)
+### 3) Verificação offline obrigatória da assinatura
+
+```bash
+pnpm usb:verify-iso
+```
+
+Também é possível apontar arquivos explícitos:
+
+```bash
+./infra/usb/scripts/verify-iso.sh \
+  infra/usb/dist/bursh-secure-usb-amd64.iso \
+  infra/usb/dist/bursh-secure-usb-amd64.iso.sig \
+  infra/usb/keys/bursh-secure-usb-signing-public.asc
+```
+
+Se falhar, **não** avance para VM/hardware.
+
+### 4) Gate obrigatório em VM (não pular)
 
 ```bash
 ./infra/usb/scripts/validate-vm-boot.sh
@@ -54,7 +85,7 @@ PASS esperado:
 
 Se falhar aqui, não avance para pendrive/hardware.
 
-### 3) Preparar pendrive físico
+### 5) Preparar pendrive físico
 
 > **Atenção:** gravação de ISO apaga o disco alvo.
 
@@ -76,14 +107,14 @@ Gravar ISO + criar partição opcional `BURSH-DATA` (ext4):
 sudo ./infra/usb/scripts/prepare-physical-usb.sh /dev/sdX --with-bursh-data
 ```
 
-### 4) Boot no hardware real
+### 6) Boot no hardware real
 
 1. ejetar o pendrive com segurança;
 2. inserir na máquina alvo;
 3. abrir menu de boot da BIOS/UEFI e selecionar o USB;
 4. aguardar login/desktop com kiosk automático.
 
-### 5) Validação pós-boot no hardware real
+### 7) Validação pós-boot no hardware real
 
 No sistema live bootado, executar:
 
@@ -174,6 +205,18 @@ O comando gera `infra/usb/dist/hardware-validation/summary.md` com:
 - cobertura da matriz obrigatória (`HW-UEFI-01`, `HW-UEFI-02`, `HW-ALT-01`);
 - gate final `GO`/`NO-GO` + gaps.
 
+## Distribuição da chave pública (release controlada)
+
+- publicar `infra/usb/keys/bursh-secure-usb-signing-public.asc` junto da release da ISO;
+- preferir canal autenticado já usado para distribuir checksum/artefatos da release;
+- nunca distribuir `infra/usb/keys/offline-signing/` (contém material privado de assinatura).
+
+Fluxo de confiança mínimo para operador:
+
+1. obter `iso`, `iso.sig` e `bursh-secure-usb-signing-public.asc`;
+2. executar `verify-iso.sh`;
+3. somente com `PASS` seguir para VM e gravação em pendrive.
+
 ## Dependências mínimas no host
 
 - `live-build` para gerar ISO;
@@ -186,12 +229,13 @@ O comando gera `infra/usb/dist/hardware-validation/summary.md` com:
 - backend;
 - Android;
 - novas features web;
-- hardening avançado de release (fica para próximo passo após hardware).
+- novas features de produto fora da trilha de confiança da ISO.
 
 ## Checklist curto pós-hardening
 
 Rodar após boot (VM e hardware), antes de anexar evidência final:
 
+- `./infra/usb/scripts/verify-iso.sh` (PASS da assinatura antes de gravar pendrive);
 - `systemctl status bursh-storage-init.service --no-pager` (ativo);
 - `systemctl status bursh-web.service --no-pager` (ativo, usuário `bursh`);
 - `systemctl status bursh-kiosk.service --no-pager` (ativo);
