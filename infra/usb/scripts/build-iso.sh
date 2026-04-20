@@ -38,9 +38,11 @@ fi
 cp "$SOURCE_ISO" "$DIST_DIR/$OUTPUT_ISO_NAME"
 
 "$USB_DIR/scripts/sign-iso.sh" "$DIST_DIR/$OUTPUT_ISO_NAME"
+"$USB_DIR/scripts/generate-sha256sums.sh" "$DIST_DIR/$OUTPUT_ISO_NAME" "$DIST_DIR/$OUTPUT_ISO_NAME.sig"
 
 cat <<MSG
-[secure-usb] ISO generated and signed:
+[secure-usb] ISO generated, signed and checksummed:
   ISO: $DIST_DIR/$OUTPUT_ISO_NAME
   SIG: $DIST_DIR/$OUTPUT_ISO_NAME.sig
+  SHA256: $DIST_DIR/sha256sums.txt
 MSG

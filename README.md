@@ -133,6 +133,7 @@ Veja opções com Docker, Dev Container e bootstrap npm em `docs/reproducibility
 - `pnpm usb:build-iso`
 - `pnpm usb:generate-signing-key`
 - `pnpm usb:sign-iso`
+- `pnpm usb:generate-sha256sums`
 - `pnpm usb:verify-iso`
 - `pnpm usb:vm`
 
@@ -151,8 +152,11 @@ Comandos:
 # primeira execução: gerar par de chaves dedicado para assinatura de ISO
 pnpm usb:generate-signing-key
 
-# build agora gera ISO + assinatura .sig automaticamente
+# build agora gera ISO + assinatura .sig + sha256sums.txt automaticamente
 pnpm usb:build-iso
+
+# (opcional) regenerar checksums manualmente para um par ISO/.sig já existente
+pnpm usb:generate-sha256sums
 
 # verificação offline obrigatória antes de VM/pendrive
 pnpm usb:verify-iso
@@ -182,8 +186,18 @@ Distribuição/verificação de confiança da ISO:
 
 - chave pública de release: `infra/usb/keys/bursh-secure-usb-signing-public.asc`;
 - assinatura gerada no build: `infra/usb/dist/bursh-secure-usb-amd64.iso.sig`;
+- checksums SHA-256 gerados no build: `infra/usb/dist/sha256sums.txt`;
 - verificação offline: `./infra/usb/scripts/verify-iso.sh <iso> <iso.sig> [public-key.asc]`;
 - **distribuição autenticada obrigatória:** publicar `iso`, `iso.sig`, `sha256sums.txt` e `bursh-secure-usb-signing-public.asc` como assets da mesma GitHub Release (tag única), com fingerprint da chave também no corpo da release e em canal secundário controlado (runbook interno ou portal seguro).
+
+Fluxo de verificação recomendado para operador (antes de executar a ISO):
+
+```bash
+cd infra/usb/dist
+sha256sum -c sha256sums.txt
+```
+
+Somente após `OK` para ISO e `.sig`, seguir para `pnpm usb:verify-iso` e depois VM/hardware.
 
 Política curta de rotação da chave pública (release controlada):
 

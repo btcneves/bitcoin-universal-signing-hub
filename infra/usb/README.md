@@ -53,6 +53,21 @@ Saída esperada:
 
 - `infra/usb/dist/bursh-secure-usb-amd64.iso`
 - `infra/usb/dist/bursh-secure-usb-amd64.iso.sig`
+- `infra/usb/dist/sha256sums.txt`
+
+Regeneração independente de checksums (quando necessário):
+
+```bash
+pnpm usb:generate-sha256sums
+```
+
+Também é possível apontar artefatos explícitos:
+
+```bash
+./infra/usb/scripts/generate-sha256sums.sh \
+  infra/usb/dist/bursh-secure-usb-amd64.iso \
+  infra/usb/dist/bursh-secure-usb-amd64.iso.sig
+```
 
 ### 3) Verificação offline obrigatória da assinatura
 
@@ -70,6 +85,15 @@ Também é possível apontar arquivos explícitos:
 ```
 
 Se falhar, **não** avance para VM/hardware.
+
+Verificação obrigatória de checksums (antes de rodar a ISO):
+
+```bash
+cd infra/usb/dist
+sha256sum -c sha256sums.txt
+```
+
+Se qualquer arquivo retornar diferente de `OK`, interrompa o fluxo e descarte os artefatos.
 
 ### 4) Gate obrigatório em VM (não pular)
 
@@ -228,8 +252,9 @@ Política de rotação:
 Fluxo de confiança mínimo para operador:
 
 1. obter `iso`, `iso.sig`, `sha256sums.txt` e `bursh-secure-usb-signing-public.asc` a partir da release autenticada;
-2. validar checksum e assinatura (`verify-iso.sh`);
-3. somente com `PASS` seguir para VM e gravação em pendrive.
+2. validar checksums (`sha256sum -c sha256sums.txt`);
+3. validar assinatura (`verify-iso.sh`);
+4. somente com `PASS` seguir para VM e gravação em pendrive.
 
 ## Consolidação prática pós-assinatura (matriz mínima)
 
@@ -257,6 +282,7 @@ Execução consolidada desta entrega:
 
 Rodar após boot (VM e hardware), antes de anexar evidência final:
 
+- `sha256sum -c infra/usb/dist/sha256sums.txt` (PASS dos checksums da ISO e `.sig` recebidos da release);
 - `./infra/usb/scripts/verify-iso.sh` (PASS da assinatura antes de gravar pendrive);
 - `systemctl status bursh-storage-init.service --no-pager` (ativo);
 - `systemctl status bursh-web.service --no-pager` (ativo, usuário `bursh`);
