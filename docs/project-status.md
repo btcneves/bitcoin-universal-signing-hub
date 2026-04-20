@@ -7,8 +7,9 @@ Atualizado em: **2026-04-20**.
 - **Concluído até 2026-04-20**: build ISO + boot em VM + validação automatizada PASS/FAIL com artefatos (`validate-vm-boot.sh`) já está operacional.
 - **Concluído até 2026-04-20 (estado anterior)**: fluxo padronizado para pendrive físico (`prepare-physical-usb.sh`) e coleta mínima de evidência pós-boot em hardware (`collect-bursh-boot-evidence.sh`).
 - **Concluído nesta entrega**: camada mínima profissional de aceite real com checklist formal `PASS/FAIL/BLOCKED`, matriz mínima obrigatória, template de evidência e script de inicialização de registro (`init-hardware-validation-record.sh`).
-- **Estado atual**: lacuna VM -> hardware foi convertida em processo de aceite objetivo e consolidável por execução.
-- **Foco imediato**: rodar matriz mínima obrigatória e fechar gate funcional para iniciar fase de hardening.
+- **Concluído nesta entrega (incremental)**: consolidação operacional das rodadas físicas com `infra/usb/scripts/summarize-hardware-validation.sh` + campo explícito de cenário da matriz no registro (`--scenario-id`).
+- **Estado atual**: lacuna VM -> hardware virou gate agregável e verificável (`GO`/`NO-GO`) a partir de execuções reais.
+- **Foco imediato**: executar rodadas físicas obrigatórias e usar `summary.md` como fonte objetiva de aceite mínimo para início do hardening.
 - **Regra ativa**: sem abrir escopo para features web, signing real, backend ou Android nesta fase.
 
 ## 1) Estado funcional atual do produto web (`apps/web`)

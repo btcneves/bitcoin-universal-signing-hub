@@ -174,8 +174,17 @@ Após validar no hardware real, inicialize o registro padronizado da execução:
   --machine "maquina-a" \
   --iso "infra/usb/dist/bursh-secure-usb-amd64.iso" \
   --boot-mode "UEFI" \
+  --scenario-id "HW-UEFI-02" \
   --with-bursh-data
 ```
+
+Após cada rodada física, consolide o gate de aceite mínimo:
+
+```bash
+./infra/usb/scripts/summarize-hardware-validation.sh
+```
+
+Saída padrão do resumo: `infra/usb/dist/hardware-validation/summary.md` (com `GO`/`NO-GO` e gaps de cobertura).
 
 Documentos de aceite profissional desta fase:
 

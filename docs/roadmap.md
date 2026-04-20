@@ -13,6 +13,7 @@ Referências operacionais: `README.md` e `infra/usb/README.md`.
 - rodar matriz mínima obrigatória (UEFI sem/ com `BURSH-DATA` + hardware alternativo);
 - gerar registro-base por execução com `init-hardware-validation-record.sh`;
 - coletar evidência mínima pós-boot com `collect-bursh-boot-evidence.sh` e registrar caminho do `.tar.gz`.
+- consolidar rodadas com `summarize-hardware-validation.sh` e tratar `summary.md` como gate operacional único de aceite mínimo (`GO`/`NO-GO`).
 
 ### P1 — Próximo passo após aceite mínimo (hardening / release readiness)
 

@@ -56,6 +56,7 @@ Campos obrigatórios no registro:
 - máquina e testador;
 - ISO usada;
 - modo de boot;
+- ID do cenário da matriz (`HW-UEFI-01`, `HW-UEFI-02`, `HW-ALT-01` ou `HW-LEGACY-01`);
 - resultado por item (PASS/FAIL/BLOCKED);
 - resultado final;
 - caminho do `.tar.gz` de evidências;
@@ -71,7 +72,35 @@ Script auxiliar (host):
   --machine "maquina-a" \
   --iso "infra/usb/dist/bursh-secure-usb-amd64.iso" \
   --boot-mode "UEFI" \
+  --scenario-id "HW-UEFI-02" \
   --with-bursh-data
 ```
 
 Saída: arquivo `.md` em `infra/usb/dist/hardware-validation/` pronto para completar durante/após o teste físico.
+
+## 4) Consolidação operacional de aceite mínimo
+
+Script oficial de agregação:
+
+```bash
+./infra/usb/scripts/summarize-hardware-validation.sh
+```
+
+Saídas:
+
+- relatório em `infra/usb/dist/hardware-validation/summary.md`;
+- mesmo conteúdo também impresso no terminal.
+
+O resumo agregado mostra:
+
+- total de execuções;
+- contagem de `PASS/FAIL/BLOCKED` (resultado final e itens de checklist);
+- cobertura dos cenários obrigatórios (`HW-UEFI-01`, `HW-UEFI-02`, `HW-ALT-01`);
+- `GO` ou `NO-GO` do gate mínimo;
+- gaps objetivos que ainda bloqueiam o aceite mínimo.
+
+Modo alternativo (sem escrever arquivo):
+
+```bash
+./infra/usb/scripts/summarize-hardware-validation.sh --stdout-only
+```

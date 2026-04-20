@@ -10,6 +10,7 @@ Checklist para declarar “funcional de verdade” nesta fase:
 - gate em VM com `validate-vm-boot.sh` em `PASS`;
 - execução da matriz mínima de hardware real com aceite mínimo (`docs/secure-usb-hardware-validation.md`);
 - registros padronizados preenchidos por execução;
+- consolidação agregada das rodadas físicas via `summarize-hardware-validation.sh`;
 - evidências `.tar.gz` anexáveis por execução obrigatória.
 
 Se tudo acima estiver verde, a Secure USB Edition é considerada **funcional para validação operacional real**.
@@ -29,4 +30,5 @@ Se tudo acima estiver verde, a Secure USB Edition é considerada **funcional par
 ## Gate resumido de aceite
 
 - **GO (fase atual):** fundação funcional validada + evidências consolidadas.
+- **Critério operacional de GO:** relatório agregado (`infra/usb/dist/hardware-validation/summary.md`) retorna `Result: GO`.
 - **NO-GO (fase atual):** qualquer cenário obrigatório da matriz em `FAIL` ou sem evidência.

@@ -10,6 +10,7 @@ MACHINE="TBD"
 ISO_PATH="$DEFAULT_ISO"
 BOOT_MODE="UEFI"
 BURSH_DATA_MODE="without-bursh-data"
+SCENARIO_ID="TBD"
 EVIDENCE_TARBALL_PATH="TBD"
 EXTRA_ARTIFACTS_PATH="TBD"
 
@@ -25,6 +26,7 @@ Options:
   --boot-mode <UEFI|Legacy|Other>
   --with-bursh-data
   --without-bursh-data
+  --scenario-id <HW-UEFI-01|HW-UEFI-02|HW-ALT-01|HW-LEGACY-01>
   --evidence-tar <path>
   --artifacts-path <path>
   -h, --help
@@ -56,6 +58,10 @@ while [[ $# -gt 0 ]]; do
     --without-bursh-data)
       BURSH_DATA_MODE="without-bursh-data"
       shift
+      ;;
+    --scenario-id)
+      SCENARIO_ID="${2:-}"
+      shift 2
       ;;
     --evidence-tar)
       EVIDENCE_TARBALL_PATH="${2:-}"
@@ -95,6 +101,7 @@ cat > "$OUTPUT_FILE" <<EOF_RECORD
 - ISO: $ISO_PATH
 - Boot mode: $BOOT_MODE
 - BURSH-DATA scenario: $BURSH_DATA_MODE
+- Matrix scenario ID: $SCENARIO_ID
 
 ## Checklist results (PASS / FAIL / BLOCKED)
 
