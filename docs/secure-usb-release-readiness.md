@@ -1,6 +1,6 @@
 # Secure USB Edition — Release Readiness Gate (distribuição autenticada + matriz mínima)
 
-Objetivo: consolidar release controlada garantindo que a cadeia de confiança da ISO (assinatura + distribuição autenticada da chave pública) e o hardening mínimo não introduziram regressões funcionais.
+Objetivo: consolidar release controlada garantindo que a cadeia de confiança da ISO (checksums SHA-256 + assinatura + distribuição autenticada da chave pública) e o hardening mínimo não introduziram regressões funcionais.
 
 ## 1) Base obrigatória validada
 
@@ -16,6 +16,7 @@ Objetivo: consolidar release controlada garantindo que a cadeia de confiança da
 - kiosk Chromium mais restritivo para contexto offline-first;
 - `bursh-web.service` com sandbox `systemd` e rede limitada a loopback;
 - assinatura GPG da ISO + verificação offline obrigatória (`sign-iso.sh`/`verify-iso.sh`).
+- checksums SHA-256 da ISO e `.sig` gerados no build (`generate-sha256sums.sh`) e verificados antes da execução.
 
 ## 3) Distribuição autenticada da chave pública
 
@@ -41,7 +42,12 @@ Publicar no **mesmo GitHub Release** (mesma tag):
 - janela curta de transição para chave anterior (apenas validação de artefatos legados);
 - toda rotação exige atualização de docs e fingerprint público antes de liberar nova ISO.
 
-## 4) Validação prática pós-assinatura (esta entrega)
+## 4) Validação prática pós-checksum/assinatura (esta entrega)
+
+Pré-condição obrigatória antes de VM e hardware:
+
+1. `sha256sum -c infra/usb/dist/sha256sums.txt`
+2. `./infra/usb/scripts/verify-iso.sh`
 
 Matriz mínima obrigatória executada com registros por cenário via `init-hardware-validation-record.sh --scenario-id`:
 
@@ -53,8 +59,8 @@ Consolidação: `summarize-hardware-validation.sh` com resultado final **GO** pa
 
 ## 5) Gate resumido
 
-- **GO (fase atual)**: distribuição autenticada da chave pública definida + assinatura/verificação offline funcionando + matriz mínima consolidada em `GO` sem regressão de hardening.
-- **NO-GO**: qualquer falha em assinatura/verificação, boot/kiosk/app local, política de persistência opcional ou ausência de cobertura PASS dos cenários obrigatórios.
+- **GO (fase atual)**: distribuição autenticada da chave pública definida + checksum/assinatura verificados offline + matriz mínima consolidada em `GO` sem regressão de hardening.
+- **NO-GO**: qualquer falha em checksums/assinatura/verificação, boot/kiosk/app local, política de persistência opcional ou ausência de cobertura PASS dos cenários obrigatórios.
 
 ## 6) Próximo passo imediato
 

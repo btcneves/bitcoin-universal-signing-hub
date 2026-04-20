@@ -11,12 +11,14 @@ Referências operacionais: `README.md` e `infra/usb/README.md`.
 - manter fluxo ISO -> VM -> pendrive -> hardware sem regressão;
 - hardening mínimo de runtime ativo (loopback-only, sandbox de serviço local, defaults kiosk restritivos);
 - assinatura de ISO no build e verificação offline operacional;
+- geração automática/publicação de `sha256sums.txt` com verificação obrigatória antes da execução da ISO;
 - distribuição autenticada da chave pública junto da release assinada;
 - matriz mínima (`HW-UEFI-01`, `HW-UEFI-02`, `HW-ALT-01`) consolidada com gate `GO`.
 
 ### P1 — Próximo passo (baseline final de release)
 
 - repetir campanha da matriz mínima para baseline final da versão candidata;
+- confirmar `GO` da matriz mínima após cada nova rodada com checksums + assinatura;
 - ampliar cobertura em hardware heterogêneo mantendo o mesmo checklist/gate;
 - validar operação da política de rotação da chave pública sem quebrar verificações offline.
 

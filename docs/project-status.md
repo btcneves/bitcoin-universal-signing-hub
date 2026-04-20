@@ -11,8 +11,9 @@ Atualizado em: **2026-04-20**.
 - **Concluído nesta entrega (hardening inicial)**: primeira camada mínima de release hardening aplicada no runtime Secure USB (kiosk mais restritivo, `bursh-web.service` com sandbox systemd e persistência opcional com bind mounts endurecidos).
 - **Concluído nesta entrega (cadeia de confiança mínima)**: build da ISO com assinatura GPG `.sig`, script de verificação offline e documentação de distribuição da chave pública.
 - **Concluído nesta entrega (distribuição autenticada + validação consolidada)**: processo formal para publicar chave pública junto da release autenticada (com política de rotação) e campanha da matriz mínima (`HW-UEFI-01`, `HW-UEFI-02`, `HW-ALT-01`) consolidada em gate `GO`.
+- **Concluído nesta entrega (integridade de artefatos)**: geração automática de `sha256sums.txt` no pipeline de build da ISO, com verificação explícita de checksums antes da validação de assinatura/execução.
 - **Estado atual**: fundação funcional + hardening mínimo ativo para início de fase final de release controlada.
-- **Foco imediato**: baseline final de release controlada (sem expansão de escopo), após validação da matriz mínima com assinatura/hardening sem regressão e gate `GO`.
+- **Foco imediato**: baseline final de release controlada (sem expansão de escopo), mantendo matriz mínima `GO` após inclusão de checksums na trilha de confiança.
 - **Regra ativa**: sem abrir escopo para features web, signing real, backend ou Android nesta fase.
 
 ## 1) Estado funcional atual do produto web (`apps/web`)

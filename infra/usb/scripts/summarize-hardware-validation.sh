@@ -66,6 +66,7 @@ scenario_descriptions = {
     "HW-LEGACY-01": "Legacy/BIOS sem BURSH-DATA (condicional se houver alvo Legacy)",
 }
 mandatory_items = {
+    "checksum (sha256sum -c sha256sums.txt)",
     "boot via usb",
     "autologin",
     "kiosk",

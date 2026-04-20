@@ -18,6 +18,7 @@
     "usb:vm": "bash infra/usb/scripts/run-vm-qemu.sh",
     "usb:summary": "bash infra/usb/scripts/summarize-hardware-validation.sh",
     "usb:sign-iso": "bash infra/usb/scripts/sign-iso.sh",
+    "usb:generate-sha256sums": "bash infra/usb/scripts/generate-sha256sums.sh",
     "usb:verify-iso": "bash infra/usb/scripts/verify-iso.sh",
     "usb:generate-signing-key": "bash infra/usb/scripts/generate-iso-signing-key.sh"
   },

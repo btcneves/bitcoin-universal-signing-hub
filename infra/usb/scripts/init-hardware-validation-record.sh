@@ -107,6 +107,7 @@ cat > "$OUTPUT_FILE" <<EOF_RECORD
 
 | Item | Result | Evidence/notes |
 |---|---|---|
+| Checksum (sha256sum -c sha256sums.txt) | TBD | |
 | Boot via USB | TBD | |
 | Autologin | TBD | |
 | Kiosk | TBD | |
