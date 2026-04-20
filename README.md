@@ -132,22 +132,39 @@ Veja opções com Docker, Dev Container e bootstrap npm em `docs/reproducibility
 - `pnpm usb:build-iso`
 - `pnpm usb:vm`
 
-### Secure USB Edition — teste real (ISO/VM/pendrive)
+### Secure USB Edition — Secure USB Quick Start
 
-Fluxo mínimo recomendado:
+Fluxo mínimo profissional (ISO -> VM -> pendrive físico):
+
+1. gerar ISO;
+2. validar boot automatizado em VM (PASS/FAIL + artefatos);
+3. gravar pendrive físico (com opção de `BURSH-DATA`);
+4. validar no hardware real e coletar evidência pós-boot.
+
+Comandos:
 
 ```bash
 pnpm usb:build-iso
-./infra/usb/scripts/run-vm-qemu.sh
+./infra/usb/scripts/validate-vm-boot.sh
+sudo ./infra/usb/scripts/prepare-physical-usb.sh /dev/sdX --with-bursh-data
 ```
 
-No ambiente live (VM ou pendrive), execute:
+No sistema live bootado no hardware real:
 
 ```bash
 sudo /usr/local/bin/smoke-test-bursh-live.sh
+sudo /usr/local/bin/collect-bursh-boot-evidence.sh
 ```
 
-Guia operacional curto (ISO, VM, pendrive e checklist): `infra/usb/README.md`.
+Critério objetivo de PASS em hardware:
+
+- kiosk abre automaticamente em fullscreen;
+- app responde em `http://127.0.0.1:4173`;
+- serviços `bursh-storage-init`, `bursh-web` e `bursh-kiosk` ativos;
+- `/run/bursh-sensitive` presente;
+- `BURSH-DATA` montado apenas para `watch-only` e `config` (quando usado).
+
+Guia completo e checklist operacional: `infra/usb/README.md`.
 
 ## Validação e governança técnica
 

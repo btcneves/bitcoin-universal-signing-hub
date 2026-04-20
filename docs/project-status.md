@@ -1,17 +1,14 @@
 # Project status and decision log
 
-Atualizado em: **2026-04-19**.
+Atualizado em: **2026-04-20**.
 
-## 0) Marco de fase (execução manual parcial -> expansão funcional orientada a lacunas)
+## 0) Marco de fase (VM automatizada concluída -> operação em hardware real)
 
-- **Concluído em 2026-04-19**: preparação de validação manual web (checklist, expected results, template de report, fluxo de bug e issue template) foi finalizada.
-- **Rodadas manuais parciais executadas em 2026-04-19**:
-  - rodada 1: encontrou bugs reais e acionáveis (falso positivo de Bech32 inválido e falso positivo de PSBT truncada), já corrigidos;
-  - rodada 2: consolidou evidência de robustez sem novos bugs.
-- rodada 3 (parcial): reforçou consistência de estado/UI, robustez contra payloads inválidos “parecidos” e continuidade offline local, sem bugs novos.
-- **Estado atual**: detector e UI mantêm consistência forte com evidência manual real acumulada nas rodadas 1, 2 e 3.
-- **Próxima etapa oficial**: fechar trilha de validação/boot da Secure USB Edition até teste real em VM e pendrive, sem abrir novas features web.
-- **Regra de origem de bug nesta fase**: issue funcional deve nascer de execução documentada (não de especulação).
+- **Concluído até 2026-04-20**: build ISO + boot em VM + validação automatizada PASS/FAIL com artefatos (`validate-vm-boot.sh`) já está operacional.
+- **Concluído nesta entrega**: fluxo padronizado para pendrive físico (`prepare-physical-usb.sh`) e coleta mínima de evidência pós-boot em hardware (`collect-bursh-boot-evidence.sh`).
+- **Estado atual**: lacuna VM -> hardware está fechada com trilha reproduzível e checklist objetivo de PASS/FAIL.
+- **Foco imediato**: executar rodadas em hardware real heterogêneo e consolidar evidências para gate de hardening/release readiness.
+- **Regra ativa**: sem abrir escopo para features web, signing real, backend ou Android nesta fase.
 
 ## 1) Estado funcional atual do produto web (`apps/web`)
 
@@ -102,28 +99,29 @@ Atualizado em: **2026-04-19**.
 - autostart via systemd: init de storage policy -> servidor local -> kiosk fullscreen;
 - política operacional de persistência: partição opcional `BURSH-DATA` somente para não sensíveis, sessão sensível em RAM.
 
-## 2.2) Fechamento de trilha prática Secure USB (entrega 2026-04-19)
+## 2.2) Fechamento de trilha prática Secure USB (entrega 2026-04-20)
 
 ### Entrega principal escolhida
 
-**Direção única desta entrega:** validação operacional de boot real da Secure USB Edition (ISO -> VM -> pendrive) com smoke test reproduzível.
+**Direção única desta entrega:** operacionalizar uso real em pendrive/hardware com fluxo curto, checklist objetivo e evidência mínima pós-boot.
 
 ### O que foi adicionado nesta entrega
 
-- script host para boot em VM (`infra/usb/scripts/run-vm-qemu.sh`), incluindo opção de disco `BURSH-DATA`;
-- smoke test no sistema live (`/usr/local/bin/smoke-test-bursh-live.sh`) para validar:
-  - serviços de autostart (`bursh-storage-init`, `bursh-web`, `bursh-kiosk`);
-  - disponibilidade do app local em `127.0.0.1:4173`;
-  - existência de diretório sensível em RAM (`/run/bursh-sensitive`);
-  - comportamento de persistência opcional não sensível quando `BURSH-DATA` está presente;
-- documentação operacional curta para gerar ISO, testar em VM e testar em pendrive.
+- fluxo host padronizado para preparar pendrive físico (`infra/usb/scripts/prepare-physical-usb.sh`), incluindo opção de partição `BURSH-DATA`;
+- coleta de evidência no live system (`/usr/local/bin/collect-bursh-boot-evidence.sh`) com:
+  - estado de serviços BURSH;
+  - logs de boot/serviços via `journalctl`;
+  - estado de mounts/discos (`findmnt`, `mount`, `lsblk -f`), incluindo `BURSH-DATA`;
+  - saída do smoke test em arquivo dedicado;
+- alinhamento da documentação principal com quick start operacional e critérios de PASS/FAIL em hardware real.
 
 ### O que já pode ser testado de verdade
 
 - build de ISO local;
-- boot em QEMU com e sem disco rotulado `BURSH-DATA`;
-- boot por pendrive físico (gravação `dd`);
-- verificação objetiva pós-boot via smoke test único.
+- gate automatizado em VM (`PASS/FAIL` + artefatos);
+- gravação padronizada em pendrive com ou sem `BURSH-DATA`;
+- validação pós-boot em hardware real com checklist objetivo;
+- export de evidências em diretório e `.tar.gz`.
 
 ### O que ainda falta para chamar de “funcional de verdade” (v1 bootável)
 
