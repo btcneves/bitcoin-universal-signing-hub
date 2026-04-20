@@ -136,10 +136,24 @@ Inicializar registro-base da execução (host):
   --tester "nome" \
   --machine "maquina-a" \
   --iso "infra/usb/dist/bursh-secure-usb-amd64.iso" \
-  --boot-mode "UEFI"
+  --boot-mode "UEFI" \
+  --scenario-id "HW-UEFI-01"
 ```
 
 Preencha o arquivo gerado em `infra/usb/dist/hardware-validation/` com resultados do checklist e caminho do `.tar.gz` coletado no boot físico.
+
+Consolidar todas as rodadas físicas registradas:
+
+```bash
+./infra/usb/scripts/summarize-hardware-validation.sh
+```
+
+O comando gera `infra/usb/dist/hardware-validation/summary.md` com:
+
+- total de execuções;
+- contagens agregadas `PASS/FAIL/BLOCKED`;
+- cobertura da matriz obrigatória (`HW-UEFI-01`, `HW-UEFI-02`, `HW-ALT-01`);
+- gate final `GO`/`NO-GO` + gaps.
 
 ## Dependências mínimas no host
 

@@ -7,6 +7,7 @@
 - ISO: `{{ISO_PATH}}`
 - Boot mode: `{{BOOT_MODE}}`
 - BURSH-DATA scenario: `{{BURSH_DATA_MODE}}`
+- Matrix scenario ID: `{{SCENARIO_ID}}` (`HW-UEFI-01` | `HW-UEFI-02` | `HW-ALT-01` | `HW-LEGACY-01`)
 
 ## Checklist results (PASS / FAIL / BLOCKED)
 

@@ -15,7 +15,8 @@
     "validate:ci": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "usb:prepare-web": "bash infra/usb/scripts/prepare-web-bundle.sh",
     "usb:build-iso": "bash infra/usb/scripts/build-iso.sh",
-    "usb:vm": "bash infra/usb/scripts/run-vm-qemu.sh"
+    "usb:vm": "bash infra/usb/scripts/run-vm-qemu.sh",
+    "usb:summary": "bash infra/usb/scripts/summarize-hardware-validation.sh"
   },
   "devDependencies": {
     "@types/node": "^22.10.1",
