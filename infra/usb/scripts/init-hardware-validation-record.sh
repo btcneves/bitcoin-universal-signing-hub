@@ -86,7 +86,7 @@ done
 mkdir -p "$OUTPUT_DIR"
 
 DATE_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-RUN_ID="hw-$(date -u +%Y%m%dT%H%M%SZ)"
+RUN_ID="hw-$(date -u +%Y%m%dT%H%M%SZ)-$(openssl rand -hex 2)"
 SAFE_MACHINE="$(tr '[:upper:]' '[:lower:]' <<<"$MACHINE" | tr -cs 'a-z0-9._-' '-')"
 [[ -z "$SAFE_MACHINE" ]] && SAFE_MACHINE="machine"
 OUTPUT_FILE="$OUTPUT_DIR/${RUN_ID}-${SAFE_MACHINE}.md"

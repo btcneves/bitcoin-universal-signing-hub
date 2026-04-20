@@ -205,17 +205,39 @@ O comando gera `infra/usb/dist/hardware-validation/summary.md` com:
 - cobertura da matriz obrigatória (`HW-UEFI-01`, `HW-UEFI-02`, `HW-ALT-01`);
 - gate final `GO`/`NO-GO` + gaps.
 
-## Distribuição da chave pública (release controlada)
+## Distribuição autenticada da chave pública (release controlada)
 
-- publicar `infra/usb/keys/bursh-secure-usb-signing-public.asc` junto da release da ISO;
-- preferir canal autenticado já usado para distribuir checksum/artefatos da release;
-- nunca distribuir `infra/usb/keys/offline-signing/` (contém material privado de assinatura).
+Pacote único de confiança por versão da ISO assinada:
+
+- publicar **no mesmo GitHub Release** (mesma tag/versionamento) os arquivos:
+  - `bursh-secure-usb-amd64.iso`
+  - `bursh-secure-usb-amd64.iso.sig`
+  - `sha256sums.txt`
+  - `bursh-secure-usb-signing-public.asc`
+- repetir no corpo da release o fingerprint exato da chave pública (`release-signing-key-id.txt`), com data de vigência;
+- espelhar o fingerprint em um **canal secundário autenticado** (runbook interno assinado, portal seguro corporativo ou comunicado assinado da equipe de release);
+- nunca distribuir `infra/usb/keys/offline-signing/` (material privado).
+
+Política de rotação:
+
+1. rotação programada ao fechar baseline final de release (ou imediata em incidente/suspeita);
+2. novo par gerado somente em ambiente offline controlado (`pnpm usb:generate-signing-key`);
+3. chave anterior pode permanecer por janela curta de transição apenas para validação de versões legadas;
+4. toda rotação exige atualização explícita de documentação de readiness e fingerprint publicado.
 
 Fluxo de confiança mínimo para operador:
 
-1. obter `iso`, `iso.sig` e `bursh-secure-usb-signing-public.asc`;
-2. executar `verify-iso.sh`;
+1. obter `iso`, `iso.sig`, `sha256sums.txt` e `bursh-secure-usb-signing-public.asc` a partir da release autenticada;
+2. validar checksum e assinatura (`verify-iso.sh`);
 3. somente com `PASS` seguir para VM e gravação em pendrive.
+
+## Consolidação prática pós-assinatura (matriz mínima)
+
+Execução consolidada desta entrega:
+
+- `validate-vm-boot.sh` faz parte do gate obrigatório pré-hardware (na campanha controlada, manter artefatos em `infra/usb/dist/vm-validation/latest`);
+- registros físicos inicializados com `init-hardware-validation-record.sh --scenario-id` para `HW-UEFI-01`, `HW-UEFI-02`, `HW-ALT-01`;
+- consolidação final por `summarize-hardware-validation.sh` com resultado esperado `GO` para liberar baseline de release controlada.
 
 ## Dependências mínimas no host
 
