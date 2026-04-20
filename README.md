@@ -182,7 +182,15 @@ Distribuição/verificação de confiança da ISO:
 
 - chave pública de release: `infra/usb/keys/bursh-secure-usb-signing-public.asc`;
 - assinatura gerada no build: `infra/usb/dist/bursh-secure-usb-amd64.iso.sig`;
-- verificação offline: `./infra/usb/scripts/verify-iso.sh <iso> <iso.sig> [public-key.asc]`.
+- verificação offline: `./infra/usb/scripts/verify-iso.sh <iso> <iso.sig> [public-key.asc]`;
+- **distribuição autenticada obrigatória:** publicar `iso`, `iso.sig`, `sha256sums.txt` e `bursh-secure-usb-signing-public.asc` como assets da mesma GitHub Release (tag única), com fingerprint da chave também no corpo da release e em canal secundário controlado (runbook interno ou portal seguro).
+
+Política curta de rotação da chave pública (release controlada):
+
+1. rotação planejada a cada baseline de release final **ou imediatamente** em suspeita de comprometimento;
+2. gerar novo par com `pnpm usb:generate-signing-key` em ambiente offline controlado;
+3. publicar nova chave pública + fingerprint junto da release seguinte e manter chave anterior marcada como `deprecated` por janela de transição;
+4. nunca publicar `infra/usb/keys/offline-signing/` (material privado).
 
 Após validar no hardware real, inicialize o registro padronizado da execução:
 
@@ -203,6 +211,11 @@ Após cada rodada física, consolide o gate de aceite mínimo:
 ```
 
 Saída padrão do resumo: `infra/usb/dist/hardware-validation/summary.md` (com `GO`/`NO-GO` e gaps de cobertura).
+
+Campanha mínima pós-assinatura/hardening (baseline controlada):
+
+- cenários executados e registrados com `--scenario-id`: `HW-UEFI-01`, `HW-UEFI-02`, `HW-ALT-01`;
+- consolidação via `./infra/usb/scripts/summarize-hardware-validation.sh` com gate final **GO** para a matriz mínima.
 
 Documentos de aceite profissional desta fase:
 

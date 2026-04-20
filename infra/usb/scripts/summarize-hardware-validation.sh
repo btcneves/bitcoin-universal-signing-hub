@@ -77,7 +77,7 @@ mandatory_items = {
 if not input_dir.exists():
     files = []
 else:
-    files = sorted(input_dir.glob("*.md"))
+    files = sorted(p for p in input_dir.glob("*.md") if p.name.lower() != "summary.md")
 
 status_counts = {"PASS": 0, "FAIL": 0, "BLOCKED": 0, "UNKNOWN": 0}
 checklist_counts = {"PASS": 0, "FAIL": 0, "BLOCKED": 0}

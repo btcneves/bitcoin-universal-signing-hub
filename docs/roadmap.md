@@ -2,24 +2,23 @@
 
 Roadmap prático para evoluir a Secure USB Edition sem expandir escopo.
 
-## Fase atual — hardening final inicial para release candidata (depois da matriz mínima)
+## Fase atual — consolidação final da release controlada
 
 Referências operacionais: `README.md` e `infra/usb/README.md`.
 
-### P0 — Obrigatório agora (hardening mínimo + confiança de artefato)
+### P0 — Obrigatório agora (fechado nesta entrega)
 
 - manter fluxo ISO -> VM -> pendrive -> hardware sem regressão;
-- aplicar hardening mínimo de runtime com impacto alto e baixo risco (loopback-only, sandbox de serviço local, defaults kiosk restritivos);
-- validar persistência opcional com mount options endurecidas (`nosuid,nodev,noexec`);
-- executar checklist curto pós-hardening junto do smoke/evidência;
-- consolidar rodada física em `summary.md` para confirmar que hardening não quebrou o gate `GO`/`NO-GO`;
-- assinar ISO no build e verificar assinatura offline antes de VM/pendrive.
+- hardening mínimo de runtime ativo (loopback-only, sandbox de serviço local, defaults kiosk restritivos);
+- assinatura de ISO no build e verificação offline operacional;
+- distribuição autenticada da chave pública junto da release assinada;
+- matriz mínima (`HW-UEFI-01`, `HW-UEFI-02`, `HW-ALT-01`) consolidada com gate `GO`.
 
-### P1 — Próximo passo (release candidate controlada)
+### P1 — Próximo passo (baseline final de release)
 
-- ampliar cobertura em hardware heterogêneo com mesmas políticas endurecidas;
-- fechar baseline de candidate release por versão de ISO assinada;
-- formalizar rotação operacional da chave pública sem expandir produto.
+- repetir campanha da matriz mínima para baseline final da versão candidata;
+- ampliar cobertura em hardware heterogêneo mantendo o mesmo checklist/gate;
+- validar operação da política de rotação da chave pública sem quebrar verificações offline.
 
 ### P2 — Release readiness ampliado (sem abrir feature nova)
 
