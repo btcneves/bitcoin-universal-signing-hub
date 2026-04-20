@@ -14,15 +14,17 @@ Status permitido por item:
 
 ### Checklist (execução única)
 
-| Item                  | Obrigatório                                           | Critério objetivo                               | PASS                                     | FAIL                                   | BLOCKED                                       |
-| --------------------- | ----------------------------------------------------- | ----------------------------------------------- | ---------------------------------------- | -------------------------------------- | --------------------------------------------- |
-| Boot via USB          | Sim                                                   | Sistema live inicializa via pendrive BURSH      | Inicializa no desktop live               | Não inicializa/trava/reboot loop       | Firmware/ambiente impede boot USB             |
-| Autologin             | Sim                                                   | Sessão abre sem credencial manual               | Usuário `bursh` entra automaticamente    | Solicita login manual                  | Bloqueio externo de política local/firmaware  |
-| Kiosk                 | Sim                                                   | Chromium abre fullscreen automático             | Janela kiosk abre e permanece estável    | Não abre, fecha ou sai do fullscreen   | GPU/driver impede renderização                |
-| App local             | Sim                                                   | `http://127.0.0.1:4173` responde localmente     | Página carrega sem erro crítico          | Não responde ou erro fatal de app      | Rede local/sistema inconsistente impede teste |
-| Smoke test            | Sim                                                   | `smoke-test-bursh-live.sh` retorna sucesso      | Exit code 0                              | Exit code != 0                         | Script ausente/corrompido no live             |
-| BURSH-DATA (opcional) | Não (obrigatório só quando cenário inclui BURSH-DATA) | Persistência apenas em watch-only/config        | `/mnt/bursh-data` e bind mounts corretos | Montagem/persistência fora da política | Cenário sem BURSH-DATA ou mídia defeituosa    |
-| Coleta de evidência   | Sim                                                   | `collect-bursh-boot-evidence.sh` gera `.tar.gz` | Tarball criado e caminho registrado      | Não gera tarball                       | Partição/diretório destino indisponível       |
+| Item                  | Obrigatório                                           | Critério objetivo                               | PASS                                     | FAIL                                       | BLOCKED                                       |
+| --------------------- | ----------------------------------------------------- | ----------------------------------------------- | ---------------------------------------- | ------------------------------------------ | --------------------------------------------- |
+| Boot via USB          | Sim                                                   | Sistema live inicializa via pendrive BURSH      | Inicializa no desktop live               | Não inicializa/trava/reboot loop           | Firmware/ambiente impede boot USB             |
+| Autologin             | Sim                                                   | Sessão abre sem credencial manual               | Usuário `bursh` entra automaticamente    | Solicita login manual                      | Bloqueio externo de política local/firmaware  |
+| Kiosk                 | Sim                                                   | Chromium abre fullscreen automático             | Janela kiosk abre e permanece estável    | Não abre, fecha ou sai do fullscreen       | GPU/driver impede renderização                |
+| App local             | Sim                                                   | `http://127.0.0.1:4173` responde localmente     | Página carrega sem erro crítico          | Não responde ou erro fatal de app          | Rede local/sistema inconsistente impede teste |
+| Smoke test            | Sim                                                   | `smoke-test-bursh-live.sh` retorna sucesso      | Exit code 0                              | Exit code != 0                             | Script ausente/corrompido no live             |
+| QR handoff xpub       | Sim                                                   | `generate` + `scan --expect xpub` sem erro      | QR xpub lido e validado                  | Prefixo inválido, truncado ou decode falha | Câmera/dependência indisponível               |
+| QR handoff PSBT       | Sim                                                   | `generate` + `scan --expect psbt` sem erro      | QR PSBT lido e validado                  | Prefixo inválido, truncado ou decode falha | Câmera/dependência indisponível               |
+| BURSH-DATA (opcional) | Não (obrigatório só quando cenário inclui BURSH-DATA) | Persistência apenas em watch-only/config        | `/mnt/bursh-data` e bind mounts corretos | Montagem/persistência fora da política     | Cenário sem BURSH-DATA ou mídia defeituosa    |
+| Coleta de evidência   | Sim                                                   | `collect-bursh-boot-evidence.sh` gera `.tar.gz` | Tarball criado e caminho registrado      | Não gera tarball                           | Partição/diretório destino indisponível       |
 
 ## 2) Matriz mínima de testes de hardware
 
@@ -45,6 +47,7 @@ Aceite mínimo atingido quando:
 2. Cada execução obrigatória possui registro de execução preenchido.
 3. Cada execução obrigatória possui caminho de `.tar.gz` de evidências.
 4. Não existe `FAIL` aberto em item obrigatório.
+5. Handoffs QR de xpub e PSBT estão `PASS` em cada cenário obrigatório.
 
 ## 3) Formato padronizado de evidência
 
@@ -114,3 +117,27 @@ Adicionar ao registro da rodada física:
 3. confirmar que não houve transferência por rede/pendrive para payloads sensíveis.
 
 Critério: os dois handoffs QR precisam ser `PASS` para declarar fluxo air-gapped funcional na rodada.
+
+## 6) Fluxo QR robusto (erros e interpretação)
+
+Exemplo de execução por cenário:
+
+```bash
+pnpm usb:qr:generate -- --type xpub --payload "xpub..." --out /tmp/xpub.png
+pnpm usb:qr:scan -- --image /tmp/xpub.png --expect xpub
+
+pnpm usb:qr:generate -- --type psbt --payload "cHNid..." --out /tmp/psbt.png
+pnpm usb:qr:scan -- --image /tmp/psbt.png --expect psbt
+```
+
+Interpretação de falhas:
+
+- `prefixo incompatível`: o QR é UR, porém de tipo diferente do esperado;
+- `payload ausente`: UR truncada sem conteúdo após `ur:crypto-.../`;
+- dependência ausente (`qrencode`, `zbarimg`, `zbarcam`): instalar no host antes de repetir a rodada.
+
+Segurança operacional reforçada:
+
+- seeds/passphrases não devem ser digitadas em dispositivos online;
+- o fluxo deve ocorrer em ambiente offline/amnésico;
+- material sensível deve permanecer em RAM e ser limpo após erro/falha.

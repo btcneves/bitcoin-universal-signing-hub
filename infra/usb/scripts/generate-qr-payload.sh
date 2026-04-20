@@ -17,6 +17,9 @@ PAYLOAD_TYPE="raw"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --)
+      shift
+      ;;
     --payload)
       PAYLOAD="${2:-}"
       shift 2
@@ -74,6 +77,7 @@ esac
 
 if ! command -v qrencode >/dev/null 2>&1; then
   echo "[qr] dependência ausente: qrencode"
+  echo "[qr] instale com: sudo apt-get update && sudo apt-get install -y qrencode"
   exit 1
 fi
 

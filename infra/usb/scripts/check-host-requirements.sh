@@ -9,6 +9,9 @@ required_commands=(
   qemu-system-x86_64
   sha256sum
   gpg
+  qrencode
+  zbarimg
+  zbarcam
 )
 
 missing=()
@@ -45,7 +48,7 @@ if ((${#missing[@]} > 0)); then
 
 Install on Debian/Ubuntu:
   sudo apt-get update
-  sudo apt-get install -y live-build qemu-system-x86 gnupg coreutils
+  sudo apt-get install -y live-build qemu-system-x86 gnupg coreutils qrencode zbar-tools
 
 If apt access is blocked by proxy/network policy, run this workflow in a host with unrestricted access to Ubuntu/Debian repositories.
 MSG

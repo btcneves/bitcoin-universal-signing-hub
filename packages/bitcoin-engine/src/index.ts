@@ -150,12 +150,35 @@ const clampAddressCount = (count?: number): number => {
   return Math.min(Math.max(count, 1), 20);
 };
 
-const fromQrOrRaw = (payload: string): string => {
+const decodeQrByExpectedType = (
+  payload: string,
+  expectedType: 'seed' | 'passphrase',
+  fieldName: 'mnemonicInput' | 'passphraseInput' | 'mnemonic' | 'passphrase'
+): string => {
   const trimmed = payload.trim();
-  if (trimmed.startsWith('ur:crypto-seed/')) return trimmed.slice('ur:crypto-seed/'.length).trim();
-  if (trimmed.startsWith('ur:crypto-passphrase/')) {
-    return trimmed.slice('ur:crypto-passphrase/'.length).trim();
+  const expectedPrefix = expectedType === 'seed' ? 'ur:crypto-seed/' : 'ur:crypto-passphrase/';
+
+  if (!trimmed) {
+    if (expectedType === 'passphrase') return '';
+    throw new Error(`Entrada inválida em ${fieldName}: valor vazio`);
   }
+
+  if (trimmed.startsWith('ur:')) {
+    if (!trimmed.startsWith(expectedPrefix)) {
+      throw new Error(
+        `QR inválido em ${fieldName}: prefixo incompatível. Esperado ${expectedPrefix}`
+      );
+    }
+
+    const decoded = trimmed.slice(expectedPrefix.length).trim();
+    if (!decoded && expectedType !== 'passphrase') {
+      throw new Error(
+        `QR inválido em ${fieldName}: payload ausente após prefixo ${expectedPrefix}`
+      );
+    }
+    return decoded;
+  }
+
   return trimmed;
 };
 
@@ -250,11 +273,21 @@ export class OfflineSeedVerificationService {
   }
 
   verifyAllCoins(request: Omit<SeedVerificationRequest, 'coin'>): MultiCoinSeedVerificationResult {
-    return {
-      bitcoin: this.verifySeed({ ...request, coin: 'bitcoin' }),
-      litecoin: this.verifySeed({ ...request, coin: 'litecoin' }),
-      dogecoin: this.verifySeed({ ...request, coin: 'dogecoin' })
-    };
+    let mnemonic = '';
+    let passphrase = '';
+    try {
+      mnemonic = decodeQrByExpectedType(request.mnemonic, 'seed', 'mnemonic');
+      passphrase = decodeQrByExpectedType(request.passphrase ?? '', 'passphrase', 'passphrase');
+
+      return {
+        bitcoin: this.verifySeed({ ...request, mnemonic, passphrase, coin: 'bitcoin' }),
+        litecoin: this.verifySeed({ ...request, mnemonic, passphrase, coin: 'litecoin' }),
+        dogecoin: this.verifySeed({ ...request, mnemonic, passphrase, coin: 'dogecoin' })
+      };
+    } finally {
+      mnemonic = '';
+      passphrase = '';
+    }
   }
 
   verifySeedFromInput(
@@ -263,14 +296,24 @@ export class OfflineSeedVerificationService {
       passphraseInput?: string;
     }
   ): SeedVerificationResult {
-    const mnemonic = fromQrOrRaw(request.mnemonicInput);
-    const passphrase = request.passphraseInput ? fromQrOrRaw(request.passphraseInput) : undefined;
+    let mnemonic = '';
+    let passphrase: string | undefined;
+    try {
+      mnemonic = decodeQrByExpectedType(request.mnemonicInput, 'seed', 'mnemonicInput');
+      passphrase =
+        request.passphraseInput !== undefined
+          ? decodeQrByExpectedType(request.passphraseInput, 'passphrase', 'passphraseInput')
+          : undefined;
 
-    return this.verifySeed({
-      ...request,
-      mnemonic,
-      ...(passphrase !== undefined ? { passphrase } : {})
-    });
+      return this.verifySeed({
+        ...request,
+        mnemonic,
+        ...(passphrase !== undefined ? { passphrase } : {})
+      });
+    } finally {
+      mnemonic = '';
+      passphrase = undefined;
+    }
   }
 
   evaluatePassphraseConsistency(
@@ -320,15 +363,37 @@ export class OfflineSeedVerificationService {
 
 export const encodeXpubForQr = (xpub: string): string => `ur:crypto-hdkey/${xpub.trim()}`;
 export const decodeXpubFromQr = (payload: string): string =>
-  payload.startsWith('ur:crypto-hdkey/') ? payload.slice('ur:crypto-hdkey/'.length) : payload;
+  decodeQrPayloadStrict(payload, 'ur:crypto-hdkey/');
 
 export const encodeSeedForQr = (mnemonic: string): string => `ur:crypto-seed/${mnemonic.trim()}`;
 export const decodeSeedFromQr = (payload: string): string =>
-  payload.startsWith('ur:crypto-seed/') ? payload.slice('ur:crypto-seed/'.length) : payload;
+  decodeQrPayloadStrict(payload, 'ur:crypto-seed/');
 
 export const encodePassphraseForQr = (passphrase: string): string =>
   `ur:crypto-passphrase/${passphrase.trim()}`;
 export const decodePassphraseFromQr = (payload: string): string =>
-  payload.startsWith('ur:crypto-passphrase/')
-    ? payload.slice('ur:crypto-passphrase/'.length)
-    : payload;
+  decodeQrPayloadStrict(payload, 'ur:crypto-passphrase/', { allowEmptyPayload: true });
+
+const decodeQrPayloadStrict = (
+  payload: string,
+  expectedPrefix: 'ur:crypto-hdkey/' | 'ur:crypto-seed/' | 'ur:crypto-passphrase/',
+  options?: { allowEmptyPayload?: boolean }
+): string => {
+  const trimmed = payload.trim();
+  if (!trimmed) {
+    if (options?.allowEmptyPayload) return '';
+    throw new Error(`QR inválido: payload vazio para prefixo esperado ${expectedPrefix}`);
+  }
+
+  if (trimmed.startsWith('ur:') && !trimmed.startsWith(expectedPrefix)) {
+    throw new Error(`QR inválido: prefixo incompatível. Esperado ${expectedPrefix}`);
+  }
+
+  if (!trimmed.startsWith(expectedPrefix)) return trimmed;
+
+  const decoded = trimmed.slice(expectedPrefix.length).trim();
+  if (!decoded && !options?.allowEmptyPayload) {
+    throw new Error(`QR inválido: payload ausente após prefixo ${expectedPrefix}`);
+  }
+  return decoded;
+};

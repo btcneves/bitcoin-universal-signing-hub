@@ -49,6 +49,9 @@ validate_payload() {
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --)
+      shift
+      ;;
     --image)
       MODE="image"
       IMAGE_PATH="${2:-}"
@@ -88,6 +91,7 @@ if [[ "$MODE" == "image" ]]; then
   fi
   if ! command -v zbarimg >/dev/null 2>&1; then
     echo "[qr] dependência ausente: zbarimg"
+    echo "[qr] instale com: sudo apt-get update && sudo apt-get install -y zbar-tools"
     exit 1
   fi
   SCANNED_PAYLOAD="$(zbarimg --quiet --raw "$IMAGE_PATH" | head -n 1)"
@@ -97,6 +101,7 @@ fi
 
 if ! command -v zbarcam >/dev/null 2>&1; then
   echo "[qr] dependência ausente: zbarcam"
+  echo "[qr] instale com: sudo apt-get update && sudo apt-get install -y zbar-tools"
   exit 1
 fi
 

@@ -84,8 +84,8 @@ describe('offline seed verification service', () => {
     expect(byQr.accountXpub.startsWith('xpub')).toBe(true);
 
     const multi = svc.verifyAllCoins({
-      mnemonic,
-      passphrase: 'TREZOR',
+      mnemonic: encodeSeedForQr(mnemonic),
+      passphrase: encodePassphraseForQr('TREZOR'),
       addressCount: 1
     });
     expect(multi.bitcoin.addresses[0]?.startsWith('bc1')).toBe(true);
@@ -94,6 +94,33 @@ describe('offline seed verification service', () => {
 
     expect(decodeSeedFromQr(encodeSeedForQr(mnemonic))).toBe(mnemonic);
     expect(decodePassphraseFromQr(encodePassphraseForQr('TREZOR'))).toBe('TREZOR');
+  });
+
+  it('rejeita QR com prefixo inesperado, truncado ou vazio em seed/passphrase', () => {
+    const svc = new OfflineSeedVerificationService();
+    const validPsbtUr = 'ur:crypto-psbt/cHNidP8BAHECAAAAAQ==';
+
+    expect(() =>
+      svc.verifySeedFromInput({
+        mnemonicInput: validPsbtUr,
+        coin: 'bitcoin'
+      })
+    ).toThrow(/prefixo incompatível/i);
+
+    expect(() =>
+      svc.verifySeedFromInput({
+        mnemonicInput: 'ur:crypto-seed/   ',
+        coin: 'bitcoin'
+      })
+    ).toThrow(/payload ausente/i);
+
+    expect(() =>
+      svc.verifyAllCoins({
+        mnemonic: 'ur:crypto-hdkey/xpub123',
+        passphrase: '',
+        addressCount: 1
+      })
+    ).toThrow(/prefixo incompatível/i);
   });
 
   it('avalia consistência de passphrase comparando xpub com/sem passphrase', () => {
@@ -123,5 +150,7 @@ describe('offline seed verification service', () => {
 
     const payload = encodeXpubForQr(expected.accountXpub);
     expect(decodeXpubFromQr(payload)).toBe(expected.accountXpub);
+    expect(() => decodeXpubFromQr('ur:crypto-seed/abc')).toThrow(/prefixo incompatível/i);
+    expect(() => decodeXpubFromQr('ur:crypto-hdkey/   ')).toThrow(/payload ausente/i);
   });
 });

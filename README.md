@@ -239,6 +239,34 @@ Status operacional mais recente (2026-04-20, UTC):
 
 Regra de release controlada nesta condição: **não criar tag/release** até repetir a rodada completa e obter `GO` no consolidado.
 
+### Fluxo QR robusto (Secure USB Edition, offline-first)
+
+Fluxo mínimo air-gapped de release: `seed -> xpub QR -> PSBT QR -> assinatura QR`, sem USB de dados e sem rede.
+
+Exemplos:
+
+```bash
+# xpub para watch-only
+pnpm usb:qr:generate -- --type xpub --payload "xpub..." --out /tmp/xpub.png
+pnpm usb:qr:scan -- --image /tmp/xpub.png --expect xpub
+
+# PSBT para assinatura offline
+pnpm usb:qr:generate -- --type psbt --payload "cHNid..." --out /tmp/unsigned-psbt.png
+pnpm usb:qr:scan -- --image /tmp/unsigned-psbt.png --expect psbt
+```
+
+Interpretação de erro de prefixo:
+
+- se o payload vier como `ur:...` com tipo diferente do esperado, o fluxo deve falhar com erro explícito de **prefixo incompatível**;
+- payload truncado (`ur:crypto-.../` sem conteúdo) deve falhar com erro de **payload ausente**;
+- registrar no checklist físico se os handoffs de xpub e PSBT ficaram `PASS`.
+
+Regras operacionais:
+
+- nunca digitar seed/passphrase em dispositivo online;
+- manter seed/passphrase apenas em RAM e limpar após falhas;
+- executar em ambiente offline/amnésico durante toda a rodada de assinatura.
+
 Documentos de aceite profissional desta fase:
 
 - checklist + matriz mínima: `docs/secure-usb-hardware-validation.md`;
