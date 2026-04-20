@@ -31,6 +31,119 @@ Escopo deliberadamente pequeno e de alto impacto, sem abrir cadeia de produto no
 
 ## Fluxo único recomendado (ISO -> VM -> pendrive -> hardware)
 
+## Guia único para Windows + Visual Studio (WSL/VM Linux obrigatório)
+
+Para ambiente Windows, o fluxo recomendado é executar **todo o pipeline dentro de Linux** (via **WSL2 Ubuntu** ou **VM Linux** aberta no Visual Studio/terminal integrado).  
+Os scripts da trilha Secure USB foram escritos em shell (`.sh`) e dependem de utilitários Linux.
+
+### 0) Preparar ambiente Linux no Windows
+
+Opção A (recomendada): **WSL2 + Ubuntu**
+
+```powershell
+wsl --install -d Ubuntu
+```
+
+Depois, abra o terminal Ubuntu (ou profile WSL no Visual Studio) e instale dependências do host:
+
+```bash
+sudo apt update
+sudo apt install -y live-build qemu-system-x86 gnupg coreutils parted e2fsprogs
+```
+
+Opção B: **VM Linux** (Hyper-V/VirtualBox/VMware) com os mesmos pacotes:
+
+```bash
+sudo apt update
+sudo apt install -y live-build qemu-system-x86 gnupg coreutils parted e2fsprogs
+```
+
+### 1) Preparar monorepo e rodar qualidade completa
+
+> Use Node **`>=20.19 <23`**.
+
+```bash
+corepack enable pnpm
+pnpm install
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+### 2) Gerar ISO assinada + `sha256sums.txt`
+
+Primeira execução (gera par de chaves de assinatura da ISO):
+
+```bash
+pnpm usb:generate-signing-key
+```
+
+Build da ISO (gera ISO + `.sig` + `sha256sums.txt`):
+
+```bash
+pnpm usb:build-iso
+```
+
+### 3) Validar checksums e assinatura (gate obrigatório)
+
+```bash
+cd infra/usb/dist
+sha256sum -c sha256sums.txt
+cd ../../..
+pnpm usb:verify-iso
+```
+
+### 4) Validar boot em VM com QEMU
+
+```bash
+./infra/usb/scripts/validate-vm-boot.sh
+```
+
+### 5) Preparar pendrive físico
+
+```bash
+sudo ./infra/usb/scripts/prepare-physical-usb.sh /dev/sdX
+```
+
+Com partição opcional `BURSH-DATA`:
+
+```bash
+sudo ./infra/usb/scripts/prepare-physical-usb.sh /dev/sdX --with-bursh-data
+```
+
+### 6) Validar no hardware live (já bootado pela ISO)
+
+```bash
+sudo /usr/local/bin/smoke-test-bursh-live.sh
+sudo /usr/local/bin/collect-bursh-boot-evidence.sh
+```
+
+### 7) Registrar matriz mínima e consolidar gate final
+
+```bash
+./infra/usb/scripts/init-hardware-validation-record.sh \
+  --tester "nome" \
+  --machine "maquina-a" \
+  --iso "infra/usb/dist/bursh-secure-usb-amd64.iso" \
+  --boot-mode "UEFI" \
+  --scenario-id "HW-UEFI-01"
+```
+
+Repita para os cenários mínimos (`HW-UEFI-01`, `HW-UEFI-02`, `HW-ALT-01`) e consolide:
+
+```bash
+./infra/usb/scripts/summarize-hardware-validation.sh
+```
+
+**Regra de release:** sem checklist completo da matriz mínima e sem `GO` no `infra/usb/dist/hardware-validation/summary.md`, **não criar tag/release**.
+
+### Limitações no Windows (Developer PowerShell)
+
+- `Developer PowerShell` não é ambiente Linux e pode falhar para scripts `.sh`, permissões, paths `/dev/sdX`, `sha256sum`, `sudo` e utilitários GNU;
+- prefira **WSL** (primeira escolha) ou **Git Bash** para execução de shell script;
+- para fluxo ISO/VM/pendrive/hardware, prefira WSL/VM Linux (Git Bash ajuda em comandos simples, mas não substitui dependências de sistema Linux como `live-build`, QEMU completo e fluxo de bloco/disco).
+
 ### 1) Gerar chave de assinatura (primeira execução)
 
 ```bash
