@@ -1,3 +1,5 @@
+import { HDKey } from '@scure/bip32';
+import { Bip39Service } from '@bursh/bitcoin-engine';
 import { Psbt } from 'bitcoinjs-lib';
 import type { ExternalSignerAdapter, PsbtService } from '@bursh/core-domain';
 
@@ -36,7 +38,9 @@ const assertStructuralRules = (psbt: Psbt): void => {
       throw new Error(`PSBT inválida: input ${index} sem UTXO de referência`);
     }
     if (input.witnessUtxo && input.nonWitnessUtxo) {
-      throw new Error(`PSBT inválida: input ${index} com witnessUtxo e nonWitnessUtxo ao mesmo tempo`);
+      throw new Error(
+        `PSBT inválida: input ${index} com witnessUtxo e nonWitnessUtxo ao mesmo tempo`
+      );
     }
   });
 };
@@ -49,7 +53,13 @@ export class DefaultPsbtService implements PsbtService {
       const [txid, voutRaw, amountRaw] = input.split(':');
       const vout = Number(voutRaw);
       const amountSats = Number(amountRaw);
-      if (!txid || !Number.isInteger(vout) || vout < 0 || !Number.isInteger(amountSats) || amountSats <= 0) {
+      if (
+        !txid ||
+        !Number.isInteger(vout) ||
+        vout < 0 ||
+        !Number.isInteger(amountSats) ||
+        amountSats <= 0
+      ) {
         throw new Error('Input PSBT inválido. Use formato txid:vout:amountSats');
       }
 
@@ -91,7 +101,46 @@ export class DefaultPsbtService implements PsbtService {
       psbt.finalizeAllInputs();
       return psbt.extractTransaction().toHex();
     } catch {
-      throw new Error('PSBT não pôde ser finalizada: assinaturas/final scripts ausentes ou inválidos');
+      throw new Error(
+        'PSBT não pôde ser finalizada: assinaturas/final scripts ausentes ou inválidos'
+      );
+    }
+  }
+
+  signPsbtWithMnemonic(
+    psbtInput: string,
+    mnemonic: string,
+    passphrase = '',
+    options?: { finalize?: boolean }
+  ): { signedPsbtBase64: string; txHex?: string } {
+    const psbt = decodePsbt(psbtInput);
+    assertStructuralRules(psbt);
+
+    const bip39 = new Bip39Service();
+    const seed = bip39.generateSeed(mnemonic, passphrase);
+
+    try {
+      const master = HDKey.fromMasterSeed(seed);
+      psbt.signAllInputsHD(master as never);
+
+      let txHex: string | undefined;
+      if (options?.finalize !== false) {
+        psbt.finalizeAllInputs();
+        txHex = psbt.extractTransaction().toHex();
+      }
+
+      const result: { signedPsbtBase64: string; txHex?: string } = {
+        signedPsbtBase64: psbt.toBase64()
+      };
+      if (txHex) result.txHex = txHex;
+      return result;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Falha na assinatura PSBT: ${error.message}`);
+      }
+      throw new Error('Falha na assinatura PSBT');
+    } finally {
+      bip39.secureWipe(seed);
     }
   }
 }
@@ -108,3 +157,8 @@ export class QrExternalSignerAdapter implements ExternalSignerAdapter {
     return qrPayload.replace('ur:crypto-psbt/', '');
   }
 }
+
+export const encodePsbtForQr = (psbtBase64: string): string =>
+  `ur:crypto-psbt/${psbtBase64.trim()}`;
+export const decodePsbtFromQr = (payload: string): string =>
+  payload.startsWith('ur:crypto-psbt/') ? payload.slice('ur:crypto-psbt/'.length) : payload;

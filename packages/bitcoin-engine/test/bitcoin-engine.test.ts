@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { Bip39Service, Bip84WalletService } from '../src/index';
+import {
+  Bip39Service,
+  Bip84WalletService,
+  OfflineSeedVerificationService,
+  decodeXpubFromQr,
+  encodeXpubForQr
+} from '../src/index';
 
 describe('BIP39 service', () => {
   const mnemonic =
@@ -37,5 +43,46 @@ describe('BIP84 wallet service', () => {
     expect(descriptor.accountXpub.startsWith('xpub')).toBe(true);
     expect(descriptor.accountZpub.startsWith('zpub')).toBe(true);
     expect(address).toBe('bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu');
+  });
+});
+
+describe('offline seed verification service', () => {
+  const mnemonic =
+    'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
+
+  it('deriva xpub e primeiros endereços sem persistir segredo', () => {
+    const svc = new OfflineSeedVerificationService();
+    const result = svc.verifySeed({
+      mnemonic,
+      passphrase: 'TREZOR',
+      coin: 'bitcoin',
+      derivationPath: "m/84'/0'/0'",
+      addressCount: 2,
+      knownAddressToMatch: 'bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu'
+    });
+
+    expect(result.accountXpub.startsWith('xpub')).toBe(true);
+    expect(result.accountSlip132?.startsWith('zpub')).toBe(true);
+    expect(result.addresses).toHaveLength(2);
+    expect(result.knownAddressMatched).toBe(false);
+  });
+
+  it('confirma passphrase por equivalência de xpub e suporta QR envelope de xpub', () => {
+    const svc = new OfflineSeedVerificationService();
+    const expected = svc.verifySeed({
+      mnemonic,
+      passphrase: 'secret',
+      derivationPath: "m/84'/0'/0'"
+    });
+
+    expect(
+      svc.confirmPassphraseByXpub(mnemonic, 'secret', expected.accountXpub, "m/84'/0'/0'")
+    ).toBe(true);
+    expect(
+      svc.confirmPassphraseByXpub(mnemonic, 'wrong', expected.accountXpub, "m/84'/0'/0'")
+    ).toBe(false);
+
+    const payload = encodeXpubForQr(expected.accountXpub);
+    expect(decodeXpubFromQr(payload)).toBe(expected.accountXpub);
   });
 });

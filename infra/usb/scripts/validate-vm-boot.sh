@@ -22,6 +22,14 @@ if ! command -v timeout >/dev/null 2>&1; then
   exit 1
 fi
 
+if ! command -v qrencode >/dev/null 2>&1; then
+  echo "[secure-usb] warning: qrencode não encontrado (fluxo air-gapped por QR ficará indisponível na VM)."
+fi
+
+if ! command -v zbarimg >/dev/null 2>&1; then
+  echo "[secure-usb] warning: zbarimg não encontrado (importação de QR por imagem ficará indisponível na VM)."
+fi
+
 if [[ ! -f "$ISO_PATH" ]]; then
   echo "[secure-usb] ISO not found: $ISO_PATH"
   echo "Run: ./infra/usb/scripts/build-iso.sh"

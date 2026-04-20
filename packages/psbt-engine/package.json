@@ -10,7 +10,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@bursh/bitcoin-engine": "file:../bitcoin-engine",
     "@bursh/core-domain": "file:../core-domain",
+    "@scure/bip32": "^1.7.0",
     "bitcoinjs-lib": "^6.1.7"
   }
 }

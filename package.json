@@ -21,7 +21,10 @@
     "usb:sign-iso": "bash infra/usb/scripts/sign-iso.sh",
     "usb:generate-sha256sums": "bash infra/usb/scripts/generate-sha256sums.sh",
     "usb:verify-iso": "bash infra/usb/scripts/verify-iso.sh",
-    "usb:generate-signing-key": "bash infra/usb/scripts/generate-iso-signing-key.sh"
+    "usb:generate-signing-key": "bash infra/usb/scripts/generate-iso-signing-key.sh",
+    "usb:qr:scan": "bash infra/usb/scripts/scan-qr-payload.sh",
+    "usb:qr:generate": "bash infra/usb/scripts/generate-qr-payload.sh",
+    "usb:qr:handoff": "bash infra/usb/scripts/airgap-qr-handoff.sh"
   },
   "devDependencies": {
     "@types/node": "^22.10.1",

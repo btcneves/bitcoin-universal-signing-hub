@@ -266,3 +266,47 @@ Documentos de aceite profissional desta fase:
 2. Consolidar cadeia mínima de confiança da ISO (assinatura + verificação offline) e validar sem regressão em VM/hardware.
 3. Continuar hardening incremental de release (compatibilidade ampla em hardware).
 4. Avançar entregáveis de plataforma (Android e Secure USB) após validação funcional web.
+
+## Fluxo real offline-first com BIP39 + Watch-only + PSBT por QR (Secure USB Edition)
+
+Novo fluxo operacional suportado nesta trilha:
+
+1. **Verificação de seed BIP39 (offline, RAM-only):**
+   - validar mnemonic;
+   - derivar xpub e endereços para Bitcoin/Litecoin/Dogecoin;
+   - opcionalmente comparar endereço conhecido e confirmar passphrase por equivalência de xpub.
+2. **Criação de watch-only via QR:**
+   - gerar QR do xpub no dispositivo offline;
+   - importar no dispositivo watch-only sem seed/passphrase.
+3. **PSBT air-gapped por QR:**
+   - gerar PSBT no dispositivo watch-only;
+   - importar PSBT por QR no dispositivo offline, revisar e assinar;
+   - exportar PSBT assinada por QR de volta ao watch-only para broadcast.
+
+### Regras de segurança obrigatórias
+
+- seed/mnemonic/passphrase **nunca** devem ser persistidas em disco;
+- processamento sensível ocorre em memória e deve ser descartado ao final da operação;
+- não usar pendrive para transferir xpub/PSBT entre dispositivos do fluxo air-gapped;
+- usar apenas QR por câmera/arquivo de imagem para handoff entre ambiente online/offline.
+
+### Scripts de QR adicionados (Secure USB)
+
+```bash
+# gerar QR de xpub/PSBT
+pnpm usb:qr:generate -- --payload "ur:crypto-hdkey/xpub..." --out /tmp/xpub.png
+
+# ler QR de imagem
+pnpm usb:qr:scan -- --image /tmp/xpub.png
+
+# wrapper de handoff air-gapped
+pnpm usb:qr:handoff -- export --payload "ur:crypto-psbt/..." --out /tmp/psbt.png
+pnpm usb:qr:handoff -- import --image /tmp/psbt-signed.png
+```
+
+### Boas práticas operacionais
+
+- preferir ambiente amnésico (ex.: Tails) para sessões sensíveis;
+- verificar assinatura/checksum da ISO antes de boot (`pnpm usb:verify-iso` + `sha256sum -c`);
+- manter dispositivo offline isolado de rede durante todo o fluxo de seed e assinatura;
+- manter dispositivo watch-only sem acesso a chave privada.
