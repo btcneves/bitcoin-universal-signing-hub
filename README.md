@@ -233,9 +233,11 @@ Campanha mínima pós-assinatura/hardening (baseline controlada):
 
 Status operacional mais recente (2026-04-20, UTC):
 
+- `pnpm usb:check-host` reportou dependências ausentes: `lb`, `qemu-system-x86_64`, `qrencode`, `zbarimg` e `zbarcam`;
 - execução no ambiente atual bloqueada na etapa `pnpm usb:build-iso` por ausência de `live-build` (`lb`);
 - sem `iso/.sig/sha256sums.txt`, as verificações `sha256sum -c` e `pnpm usb:verify-iso` não puderam concluir;
-- consolidado atual em `infra/usb/dist/hardware-validation/summary.md` indica `NO-GO` com cobertura pendente de `HW-UEFI-01`, `HW-UEFI-02` e `HW-ALT-01`.
+- tentativa de rodada QR bloqueada em `pnpm usb:qr:generate` por ausência de `qrencode` no host;
+- consolidado atual em `infra/usb/dist/hardware-validation/summary.md` indica `NO-GO` com cobertura pendente de `HW-UEFI-01`, `HW-UEFI-02` e `HW-ALT-01` (0 execuções encontradas).
 
 Regra de release controlada nesta condição: **não criar tag/release** até repetir a rodada completa e obter `GO` no consolidado.
 
