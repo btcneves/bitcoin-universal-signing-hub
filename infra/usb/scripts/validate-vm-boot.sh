@@ -30,6 +30,10 @@ if ! command -v zbarimg >/dev/null 2>&1; then
   echo "[secure-usb] warning: zbarimg não encontrado (importação de QR por imagem ficará indisponível na VM)."
 fi
 
+if ! command -v zbarcam >/dev/null 2>&1; then
+  echo "[secure-usb] warning: zbarcam não encontrado (importação de QR por câmera ficará indisponível na VM)."
+fi
+
 if [[ ! -f "$ISO_PATH" ]]; then
   echo "[secure-usb] ISO not found: $ISO_PATH"
   echo "Run: ./infra/usb/scripts/build-iso.sh"

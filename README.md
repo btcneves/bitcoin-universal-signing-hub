@@ -310,3 +310,30 @@ pnpm usb:qr:handoff -- import --image /tmp/psbt-signed.png
 - verificar assinatura/checksum da ISO antes de boot (`pnpm usb:verify-iso` + `sha256sum -c`);
 - manter dispositivo offline isolado de rede durante todo o fluxo de seed e assinatura;
 - manter dispositivo watch-only sem acesso a chave privada.
+
+## Fluxo offline real (seed -> watch-only -> PSBT assinada por QR)
+
+Novo fluxo operacional offline-first, sem USB/rede para xpub/PSBT:
+
+1. **Verificar seed BIP39 em RAM-only** (BTC/LTC/DOGE): derivar xpub/endereços e confirmar endereço conhecido.
+2. **Checar passphrase sem expor texto**: derivação de xpub com e sem passphrase para confirmar consistência.
+3. **Exportar xpub via QR UR**: `ur:crypto-hdkey/...` para dispositivo watch-only.
+4. **Criar PSBT no watch-only** e exportar via `ur:crypto-psbt/...`.
+5. **Assinar PSBT offline** no ambiente air-gapped com seed/passphrase somente em memória.
+6. **Retornar PSBT assinada por QR** ao watch-only para transmissão.
+
+Comandos auxiliares:
+
+```bash
+pnpm usb:qr:generate -- --type xpub --payload "xpub..." --out /tmp/xpub.png
+pnpm usb:qr:scan -- --image /tmp/xpub.png --expect xpub
+pnpm usb:qr:handoff export --type psbt --payload "cHNid..." --out /tmp/psbt.png
+pnpm usb:qr:handoff import --image /tmp/psbt.png --expect psbt
+```
+
+Alertas de segurança operacional:
+
+- executar em ambiente amnésico/offline (ex.: Tails com rede desativada);
+- nunca gravar seed/passphrase em disco;
+- verificar assinatura/checksum da ISO e do software antes de uso;
+- manter handoff apenas por QR (sem pendrive ou rede para payload sensível).

@@ -1,16 +1,19 @@
 import { ActionCard } from '@bursh/ui';
 
 const ACTIONS = [
-  { title: 'Escanear QR', subtitle: 'Detector em memória transitória com limpeza manual.' },
+  { title: 'Verificar Seed BIP39', subtitle: 'Entrada manual ou QR com validação RAM-only.' },
   {
-    title: 'Verificação BIP39',
-    subtitle: 'Seed/passphrase em RAM-only para conferir xpub, derivação e endereços.'
+    title: 'Gerar Xpub via QR',
+    subtitle: 'Exportação watch-only em UR (`ur:crypto-hdkey/...`) sem USB/rede.'
   },
   {
-    title: 'Fluxo watch-only',
-    subtitle: 'Geração/importação de xpub via QR, sem seed/passphrase no dispositivo online.'
+    title: 'Assinar PSBT via QR offline',
+    subtitle: 'Roundtrip air-gapped de PSBT (`ur:crypto-psbt/...`) com assinatura em memória.'
   },
-  { title: 'Fluxo sensível', subtitle: 'Assinatura PSBT offline em memória e exportação por QR.' },
+  {
+    title: 'Escanear QR',
+    subtitle: 'Detector em memória transitória para seed, passphrase, xpub e PSBT.'
+  },
   { title: 'Configurações', subtitle: 'Privacidade, hardening e políticas de dados.' }
 ];
 

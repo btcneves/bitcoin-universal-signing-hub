@@ -63,6 +63,18 @@ if ! command -v mkfs.ext4 >/dev/null 2>&1; then
   exit 1
 fi
 
+if ! command -v qrencode >/dev/null 2>&1; then
+  echo "[secure-usb] warning: qrencode não encontrado (geração de QR para handoff offline ficará indisponível no host)."
+fi
+
+if ! command -v zbarimg >/dev/null 2>&1; then
+  echo "[secure-usb] warning: zbarimg não encontrado (leitura de QR por imagem ficará indisponível no host)."
+fi
+
+if ! command -v zbarcam >/dev/null 2>&1; then
+  echo "[secure-usb] warning: zbarcam não encontrado (leitura de QR por câmera ficará indisponível no host)."
+fi
+
 echo "[secure-usb] target: $DEVICE"
 echo "[secure-usb] iso: $ISO_PATH"
 echo "[secure-usb] WARNING: all data on $DEVICE will be erased."

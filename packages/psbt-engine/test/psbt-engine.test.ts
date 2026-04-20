@@ -51,6 +51,16 @@ describe('psbt-engine', () => {
     expect(decodePsbtFromQr(qrPayload)).toBe(psbt);
   });
 
+  it('assina PSBT recebida via UR QR e devolve UR QR assinada', () => {
+    const svc = new DefaultPsbtService();
+    const psbt = makeValidPsbt();
+    const qrPayload = encodePsbtForQr(psbt);
+
+    expect(() => svc.signPsbtFromQrWithMnemonic(qrPayload, 'abandon abandon abandon')).toThrow(
+      /Mnemonic inválido/i
+    );
+  });
+
   it('limpa seed da memória em tentativas de assinatura falhas', () => {
     const svc = new DefaultPsbtService();
     const invalidMnemonic = 'abandon abandon abandon';
