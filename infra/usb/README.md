@@ -63,6 +63,32 @@ sudo apt-get update
 sudo apt-get install -y qemu-system-x86 qemu-utils ovmf
 ```
 
+### Validação automatizada de boot (PASS/FAIL + evidências)
+
+Com a ISO já gerada, execute um comando único:
+
+```bash
+./infra/usb/scripts/validate-vm-boot.sh
+```
+
+Com ISO customizada:
+
+```bash
+./infra/usb/scripts/validate-vm-boot.sh /caminho/para/arquivo.iso
+```
+
+Resultado esperado:
+
+- saída objetiva no host: `PASS` ou `FAIL`;
+- desligamento automático da VM ao fim do smoke;
+- artefatos em `infra/usb/dist/vm-validation/latest/` (logs serial/QEMU + metadados).
+
+Variável opcional:
+
+```bash
+VALIDATE_TIMEOUT_SECONDS=240 ./infra/usb/scripts/validate-vm-boot.sh
+```
+
 ### Modo efêmero (sem persistência)
 
 ```bash

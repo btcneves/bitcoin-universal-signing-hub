@@ -4,3 +4,4 @@ set -eu
 systemctl enable bursh-storage-init.service
 systemctl enable bursh-web.service
 systemctl enable bursh-kiosk.service
+systemctl enable bursh-auto-smoke.service
