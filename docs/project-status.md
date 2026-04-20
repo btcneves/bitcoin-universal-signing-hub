@@ -10,7 +10,7 @@ Atualizado em: **2026-04-19**.
   - rodada 2: consolidou evidência de robustez sem novos bugs.
 - rodada 3 (parcial): reforçou consistência de estado/UI, robustez contra payloads inválidos “parecidos” e continuidade offline local, sem bugs novos.
 - **Estado atual**: detector e UI mantêm consistência forte com evidência manual real acumulada nas rodadas 1, 2 e 3.
-- **Próxima etapa oficial**: validar em rodada manual direcionada o novo modo de leitura por câmera/QR (MVP) conectado ao pipeline já estável.
+- **Próxima etapa oficial**: fechar trilha de validação/boot da Secure USB Edition até teste real em VM e pendrive, sem abrir novas features web.
 - **Regra de origem de bug nesta fase**: issue funcional deve nascer de execução documentada (não de especulação).
 
 ## 1) Estado funcional atual do produto web (`apps/web`)
@@ -102,6 +102,35 @@ Atualizado em: **2026-04-19**.
 - autostart via systemd: init de storage policy -> servidor local -> kiosk fullscreen;
 - política operacional de persistência: partição opcional `BURSH-DATA` somente para não sensíveis, sessão sensível em RAM.
 
+## 2.2) Fechamento de trilha prática Secure USB (entrega 2026-04-19)
+
+### Entrega principal escolhida
+
+**Direção única desta entrega:** validação operacional de boot real da Secure USB Edition (ISO -> VM -> pendrive) com smoke test reproduzível.
+
+### O que foi adicionado nesta entrega
+
+- script host para boot em VM (`infra/usb/scripts/run-vm-qemu.sh`), incluindo opção de disco `BURSH-DATA`;
+- smoke test no sistema live (`/usr/local/bin/smoke-test-bursh-live.sh`) para validar:
+  - serviços de autostart (`bursh-storage-init`, `bursh-web`, `bursh-kiosk`);
+  - disponibilidade do app local em `127.0.0.1:4173`;
+  - existência de diretório sensível em RAM (`/run/bursh-sensitive`);
+  - comportamento de persistência opcional não sensível quando `BURSH-DATA` está presente;
+- documentação operacional curta para gerar ISO, testar em VM e testar em pendrive.
+
+### O que já pode ser testado de verdade
+
+- build de ISO local;
+- boot em QEMU com e sem disco rotulado `BURSH-DATA`;
+- boot por pendrive físico (gravação `dd`);
+- verificação objetiva pós-boot via smoke test único.
+
+### O que ainda falta para chamar de “funcional de verdade” (v1 bootável)
+
+- hardening adicional de produção (cadeia de confiança/assinatura da imagem e lockdown incremental);
+- rodada estruturada de teste em hardware real heterogêneo com evidência consolidada;
+- critérios formais de aceite para release Secure USB além do smoke test de fundação.
+
 ## 3) Decisões técnicas consolidadas
 
 1. **Priorizar estabilização técnica antes de expansão funcional**  
@@ -142,17 +171,16 @@ Atualizado em: **2026-04-19**.
 
 ### 4.4 Próxima entrega concreta recomendada no repositório
 
-**Entrega escolhida agora:** _PSBT pós-revisão com checkpoint local + preparação local de encaminhamento (simulação offline) para assinatura externa futura._
+**Entrega escolhida agora:** _trilha operacional mínima Secure USB para teste real de boot (ISO, VM e pendrive) com validação por smoke test._
 
 Escopo objetivo desta entrega:
 
-1. preservar detecção de PSBT válida e rejeição de PSBT truncada/quase-PSBT;
-2. expor painel local de revisão offline com feedback explícito do que foi reconhecido;
-3. adicionar checkpoint local de revisão concluída e preparo local de encaminhamento para estado mais acionável sem integrar export/assinatura real;
-4. explicitar na UI a separação de etapas futuras (exportação, assinatura externa, validação/finalização);
-5. manter auto-clear sensível e isolamento do fluxo sensível;
-6. cobrir em testes automatizados o novo estado/painel PSBT e coexistência com regressões já cobertas;
-7. manter fora desta entrega: Android, Secure USB, assinatura real, broadcast real, integração externa ponta-a-ponta.
+1. preservar pipeline atual de build ISO e autostart kiosk já existente;
+2. incluir execução padronizada de VM para reduzir fricção de validação real;
+3. adicionar smoke test pós-boot reproduzível no próprio live system;
+4. documentar fluxo curto de gravação em pendrive e checklist de verificação;
+5. manter intactas as regras de segurança (sensível em RAM, persistência apenas não sensível);
+6. manter fora desta entrega: novas features web, assinatura real, broadcast real, redesign de arquitetura.
 
 ## 5) Riscos técnicos ainda abertos
 

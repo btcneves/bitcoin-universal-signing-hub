@@ -2,28 +2,28 @@
 
 Roadmap prático para evoluir o produto após estabilização técnica inicial.
 
-## Fase atual — Validação funcional web (gate obrigatório)
+## Fase atual — Fechar trilha de validação/boot da Secure USB Edition
 
 Referência de execução: `docs/web-functional-checklist.md`.
 
-### P0 — Obrigatório agora
+### P0 — Obrigatório agora (Secure USB)
 
-- executar checklist funcional completo no app local e registrar evidências;
-- classificar cada fluxo como funcional, parcial ou não implementado;
-- abrir issues objetivas para cada falha encontrada com payload de reprodução.
+- gerar ISO live local de forma reproduzível;
+- validar boot em VM (QEMU) com smoke test pós-boot;
+- validar gravação/boot por pendrive físico com o mesmo smoke test;
+- registrar evidência objetiva de autostart kiosk/app e política de persistência não sensível.
 
-### P1 — Próxima entrega de produto (curto prazo)
+### P1 — Consolidação imediata após P0
 
-- refinamento do fluxo QR/payload detection (entrada, feedback e robustez);
-- QR por câmera no web app (MVP) conectado ao mesmo pipeline de detecção já validado, com fallback para entrada manual quando câmera/permissão não estiverem disponíveis;
-- watch-only local pós-detecção evoluído com resumo de escopo/descriptor e estado “preparado” offline; próximo passo é UX navegável com export/import controlado sem rede;
-- PSBT UX pós-detecção já evoluída para revisão offline local + checkpoint local de revisão concluída + preparo local de encaminhamento (simulação offline) para assinatura externa futura; próximo passo é roundtrip local com integração externa mínima validada.
+- ampliar checklist de hardware real (UEFI/BIOS, GPU, Wi‑Fi/Bluetooth desativado quando aplicável);
+- aplicar hardening incremental na imagem live (defaults mais restritivos, redução de superfície e trilha de auditoria);
+- formalizar critérios de aceite para versão bootável “funcional de verdade”.
 
-### P2 — Consolidação operacional
+### P2 — Retomar evolução de produto (após trilha USB estabilizada)
 
 - integração real com assinador externo em cenário reproduzível;
-- critérios de release de segurança e funcionalidade para uso controlado.
-- Secure USB Edition: validar ISO em VM/hardware e aplicar hardening incremental (polkit/USB rules/read-only defaults).
+- critérios de release de segurança e funcionalidade para uso controlado;
+- evolução adicional de UX web somente com base em lacunas comprovadas em validação real.
 
 ### P3 — Expansão de plataforma (após gate funcional)
 
@@ -34,4 +34,4 @@ Referência de execução: `docs/web-functional-checklist.md`.
 
 - novas features grandes fora do escopo de validação funcional;
 - refactors amplos sem ganho direto de validação/clareza;
-- avanço de Android/USB antes de conclusão do gate funcional web.
+- redesign amplo de arquitetura antes de consolidar boot/teste real da Secure USB.

@@ -130,6 +130,24 @@ Veja opções com Docker, Dev Container e bootstrap npm em `docs/reproducibility
 - `pnpm audit --prod --ignore GHSA-848j-6mx2-7j84`
 - `pnpm usb:prepare-web`
 - `pnpm usb:build-iso`
+- `pnpm usb:vm`
+
+### Secure USB Edition — teste real (ISO/VM/pendrive)
+
+Fluxo mínimo recomendado:
+
+```bash
+pnpm usb:build-iso
+./infra/usb/scripts/run-vm-qemu.sh
+```
+
+No ambiente live (VM ou pendrive), execute:
+
+```bash
+sudo /usr/local/bin/smoke-test-bursh-live.sh
+```
+
+Guia operacional curto (ISO, VM, pendrive e checklist): `infra/usb/README.md`.
 
 ## Validação e governança técnica
 
