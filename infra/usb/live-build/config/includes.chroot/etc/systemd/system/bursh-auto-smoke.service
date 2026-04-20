@@ -1,0 +1,11 @@
+[Unit]
+Description=BURSH automatic smoke validation for VM boot
+After=multi-user.target bursh-kiosk.service
+Wants=bursh-kiosk.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/smoke-test-bursh-auto.sh
+
+[Install]
+WantedBy=multi-user.target
