@@ -46,12 +46,13 @@ Referências:
 - app Android
 - edição Secure USB bootável de produção (hardening e validação em hardware real ainda em andamento)
 
-### Secure USB Edition — fundação executável (abril/2026)
+### Secure USB Edition — fundação executável + hardening mínimo (abril/2026)
 
 - pipeline inicial reproduzível com Debian Live (`live-build`) em `infra/usb`;
 - build da ISO já integra bundle local do app web (`apps/web/dist`) e injeta no filesystem live;
 - boot com `systemd` iniciando servidor local do app + Chromium em modo kiosk/fullscreen;
 - política de sessão sensível em RAM (`/run/bursh-sensitive`) e persistência opcional apenas para não sensíveis (`/var/lib/bursh/watch-only` e `/var/lib/bursh/config`, via partição `BURSH-DATA`).
+- defaults de runtime endurecidos: kiosk Chromium com networking de background desativado e serviço local web restrito por sandbox do `systemd` (sem exposição além de loopback).
 
 ### Validação funcional desta fase
 
@@ -210,5 +211,5 @@ Documentos de aceite profissional desta fase:
 ## Roadmap resumido
 
 1. Validar fluxos funcionais reais (scanner, PSBT end-to-end, integração com carteira externa).
-2. Endurecer segurança aplicada (telemetria, hardening de execução, revisões contínuas).
+2. Continuar hardening incremental de release (compatibilidade ampla em hardware + cadeia de confiança da imagem).
 3. Avançar entregáveis de plataforma (Android e Secure USB) após validação funcional web.

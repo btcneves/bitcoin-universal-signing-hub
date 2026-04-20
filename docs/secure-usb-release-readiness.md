@@ -1,34 +1,36 @@
-# Secure USB Edition — Release Readiness Gate (curto)
+# Secure USB Edition — Release Readiness Gate (hardening inicial)
 
-Objetivo: separar claramente o que já é base funcional validável do que ainda é hardening/produção.
+Objetivo: manter a fundação validada e iniciar o hardening mínimo obrigatório para candidate release controlada.
 
-## 1) Fundação funcional validada (o que precisa estar pronto agora)
+## 1) Base já validada (permanece obrigatória)
 
-Checklist para declarar “funcional de verdade” nesta fase:
+- ISO reproduzível (`build-iso.sh`);
+- gate VM em `PASS` (`validate-vm-boot.sh` + artefatos);
+- fluxo físico com `prepare-physical-usb.sh`;
+- checklist/matriz de hardware real executável (`docs/secure-usb-hardware-validation.md`);
+- evidência consolidada por rodada (`summarize-hardware-validation.sh`).
 
-- ISO gerada localmente (`build-iso.sh`);
-- gate em VM com `validate-vm-boot.sh` em `PASS`;
-- execução da matriz mínima de hardware real com aceite mínimo (`docs/secure-usb-hardware-validation.md`);
-- registros padronizados preenchidos por execução;
-- consolidação agregada das rodadas físicas via `summarize-hardware-validation.sh`;
-- evidências `.tar.gz` anexáveis por execução obrigatória.
+## 2) Hardening coberto nesta entrega
 
-Se tudo acima estiver verde, a Secure USB Edition é considerada **funcional para validação operacional real**.
+- mount policy mais restritiva para persistência opcional (`nosuid,nodev,noexec` também nos bind mounts de `watch-only` e `config`);
+- kiosk Chromium com defaults offline/dedicado mais restritivos (menos networking/background);
+- `bursh-web.service` endurecido com sandbox `systemd` e rede limitada a loopback.
 
-## 2) Pendências de hardening (próxima fase, sem bloquear esta entrega)
+## 3) Checklist pós-hardening (curto)
 
-- hardening incremental de runtime/live image (defaults mais restritivos);
-- revisão de superfície de ataque e lockdown adicional;
-- políticas extras de integridade/cadeia de confiança da imagem.
+1. boot em VM e hardware continua funcional;
+2. app responde em `http://127.0.0.1:4173`;
+3. `bursh-web.service` ativo como `bursh`;
+4. `BURSH-DATA` opcional mantém persistência apenas em `watch-only/config`;
+5. smoke/evidência continuam gerando saída sem regressão.
 
-## 3) Pendências de produção/release
+## 4) O que ainda falta para release pronta para uso controlado
 
-- rodada maior de compatibilidade em hardware heterogêneo;
-- trilha de evidência contínua por candidate release;
-- critérios finais de go/no-go para distribuição externa.
+- rodada ampliada de compatibilidade em hardware real (além da matriz mínima);
+- fechamento de baseline por candidate release (execução repetida + evidência contínua);
+- cadeia mínima de confiança de imagem/distribuição (assinatura/verificação de artefato) em fase separada.
 
-## Gate resumido de aceite
+## Gate resumido
 
-- **GO (fase atual):** fundação funcional validada + evidências consolidadas.
-- **Critério operacional de GO:** relatório agregado (`infra/usb/dist/hardware-validation/summary.md`) retorna `Result: GO`.
-- **NO-GO (fase atual):** qualquer cenário obrigatório da matriz em `FAIL` ou sem evidência.
+- **GO (fase atual)**: base validada + hardening inicial ativo + matriz mínima sem regressão funcional.
+- **NO-GO**: regressão de boot/kiosk/app local ou perda de isolamento definido para persistência opcional.

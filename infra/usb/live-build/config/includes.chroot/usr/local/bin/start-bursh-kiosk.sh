@@ -11,6 +11,14 @@ exec chromium \
   --kiosk \
   --incognito \
   --no-first-run \
+  --no-default-browser-check \
   --disable-sync \
-  --disable-features=Translate,AutofillServerCommunication \
+  --disable-breakpad \
+  --disable-component-update \
+  --disable-domain-reliability \
+  --disable-background-networking \
+  --disable-features=Translate,AutofillServerCommunication,MediaRouter,OptimizationHints,NetworkTimeServiceQuerying \
+  --disable-session-crashed-bubble \
+  --password-store=basic \
+  --disk-cache-size=1 \
   --app=http://127.0.0.1:4173

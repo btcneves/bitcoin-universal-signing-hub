@@ -2,24 +2,23 @@
 
 Roadmap prático para evoluir a Secure USB Edition sem expandir escopo.
 
-## Fase atual — operação real em hardware (depois da VM automatizada)
+## Fase atual — hardening final inicial para release candidata (depois da matriz mínima)
 
 Referências operacionais: `README.md` e `infra/usb/README.md`.
 
-### P0 — Obrigatório agora (aceite mínimo profissional em hardware)
+### P0 — Obrigatório agora (hardening mínimo sem regressão)
 
-- executar fluxo curto e reproduzível: ISO -> `validate-vm-boot.sh` -> `prepare-physical-usb.sh` -> boot físico;
-- aplicar checklist formal com critérios `PASS/FAIL/BLOCKED` (`docs/secure-usb-hardware-validation.md`);
-- rodar matriz mínima obrigatória (UEFI sem/ com `BURSH-DATA` + hardware alternativo);
-- gerar registro-base por execução com `init-hardware-validation-record.sh`;
-- coletar evidência mínima pós-boot com `collect-bursh-boot-evidence.sh` e registrar caminho do `.tar.gz`.
-- consolidar rodadas com `summarize-hardware-validation.sh` e tratar `summary.md` como gate operacional único de aceite mínimo (`GO`/`NO-GO`).
+- manter fluxo ISO -> VM -> pendrive -> hardware sem regressão;
+- aplicar hardening mínimo de runtime com impacto alto e baixo risco (loopback-only, sandbox de serviço local, defaults kiosk restritivos);
+- validar persistência opcional com mount options endurecidas (`nosuid,nodev,noexec`);
+- executar checklist curto pós-hardening junto do smoke/evidência;
+- consolidar rodada física em `summary.md` para confirmar que hardening não quebrou o gate `GO`/`NO-GO`.
 
-### P1 — Próximo passo após aceite mínimo (hardening / release readiness)
+### P1 — Próximo passo (release candidate controlada)
 
-- hardening incremental da live image (defaults mais restritivos e redução de superfície);
-- ampliar matriz de compatibilidade para candidatos de release;
-- evoluir gate funcional para gate de release externo completo.
+- ampliar cobertura em hardware heterogêneo com mesmas políticas endurecidas;
+- fechar baseline de candidate release por versão de ISO;
+- preparar cadeia mínima de confiança da imagem (sem expandir produto).
 
 ### P2 — Release readiness ampliado (sem abrir feature nova)
 
