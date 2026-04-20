@@ -1,155 +1,137 @@
-# Secure USB Edition (fundação executável)
+# Secure USB Edition (fluxo operacional)
 
-Esta pasta contém a fundação reproduzível da edição bootável por pendrive e agora inclui trilha prática de validação até boot real (VM/pendrive).
+Objetivo desta fase: fechar a lacuna entre validação em VM e uso real em pendrive/hardware com evidência mínima reproduzível.
 
-## Diagnóstico objetivo atual
+## Estado atual consolidado
 
-### Já implementado e executável
+- ISO gerada de forma reproduzível (`live-build`);
+- validação automatizada em VM já disponível com saída PASS/FAIL e artefatos;
+- evidência de boot em ambiente virtual já existe;
+- foco agora: execução real em pendrive + hardware físico.
 
-- build de ISO live com Debian Live (`live-build`, Bookworm, amd64);
-- inclusão automática do bundle web (`apps/web/dist`) na imagem;
-- boot com `systemd` iniciando política de storage, servidor local e Chromium em kiosk fullscreen;
-- separação de dados:
-  - sessão sensível em RAM (`/run/bursh-sensitive`);
-  - persistência opcional apenas para não sensíveis (`watch-only` e `config`) em partição label `BURSH-DATA`;
-- smoke test interno no ambiente live (`/usr/local/bin/smoke-test-bursh-live.sh`) para validar serviços/autostart/app/storage policy.
+## Fluxo único recomendado (ISO -> VM -> pendrive -> hardware)
 
-### Ainda parcial / estrutura inicial
-
-- hardening de produção (secure boot chain, assinatura de imagem, lockdown adicional de runtime);
-- matriz ampla de compatibilidade de hardware real;
-- automação de testes de boot em CI com evidência contínua.
-
-### Lacuna já fechada nesta entrega
-
-- havia fundação executável de build/boot, mas faltava trilha operacional curta para validar runtime em VM e pendrive com passos repetíveis;
-- agora existem script de execução em QEMU + checklist/smoke test para validação real de boot e política de persistência.
-
-## Estrutura
-
-- `scripts/prepare-web-bundle.sh`: builda `@bursh/web` e copia o bundle para o overlay da ISO.
-- `scripts/build-iso.sh`: pipeline reproduzível local com `live-build`.
-- `scripts/run-vm-qemu.sh`: sobe a ISO em QEMU para teste de boot.
-- `live-build/config/package-lists/`: pacotes base da edição bootável.
-- `live-build/config/includes.chroot/`: arquivos injetados no filesystem final (scripts + unidades systemd).
-- `live-build/config/hooks/live/`: hooks de build para criação de usuário e enable de serviços.
-
-## Como gerar a ISO
-
-Pré-requisitos no host Debian/Ubuntu:
+### 1) Build da ISO
 
 ```bash
-sudo apt-get update
-sudo apt-get install -y live-build
-pnpm install
-```
-
-Build:
-
-```bash
-./infra/usb/scripts/build-iso.sh
+pnpm usb:build-iso
 ```
 
 Saída esperada:
 
 - `infra/usb/dist/bursh-secure-usb-amd64.iso`
 
-## Como testar em VM (QEMU)
-
-Pré-requisitos no host Debian/Ubuntu:
-
-```bash
-sudo apt-get update
-sudo apt-get install -y qemu-system-x86 qemu-utils ovmf
-```
-
-### Validação automatizada de boot (PASS/FAIL + evidências)
-
-Com a ISO já gerada, execute um comando único:
+### 2) Gate obrigatório em VM (não pular)
 
 ```bash
 ./infra/usb/scripts/validate-vm-boot.sh
 ```
 
-Com ISO customizada:
+PASS esperado:
+
+- comando retorna exit code `0`;
+- imprime `PASS`;
+- gera artefatos em `infra/usb/dist/vm-validation/latest/`.
+
+Se falhar aqui, não avance para pendrive/hardware.
+
+### 3) Preparar pendrive físico
+
+> **Atenção:** gravação de ISO apaga o disco alvo.
+
+Identifique o dispositivo alvo (exemplo `/dev/sdX`):
 
 ```bash
-./infra/usb/scripts/validate-vm-boot.sh /caminho/para/arquivo.iso
+lsblk -o NAME,SIZE,MODEL,TRAN
 ```
 
-Resultado esperado:
-
-- saída objetiva no host: `PASS` ou `FAIL`;
-- desligamento automático da VM ao fim do smoke;
-- artefatos em `infra/usb/dist/vm-validation/latest/` (logs serial/QEMU + metadados).
-
-Variável opcional:
+Gravar ISO apenas:
 
 ```bash
-VALIDATE_TIMEOUT_SECONDS=240 ./infra/usb/scripts/validate-vm-boot.sh
+sudo ./infra/usb/scripts/prepare-physical-usb.sh /dev/sdX
 ```
 
-### Modo efêmero (sem persistência)
+Gravar ISO + criar partição opcional `BURSH-DATA` (ext4):
 
 ```bash
-./infra/usb/scripts/run-vm-qemu.sh
+sudo ./infra/usb/scripts/prepare-physical-usb.sh /dev/sdX --with-bursh-data
 ```
 
-### Modo com persistência não sensível
+### 4) Boot no hardware real
 
-```bash
-truncate -s 2G infra/usb/dist/bursh-data.img
-mkfs.ext4 -L BURSH-DATA infra/usb/dist/bursh-data.img
-./infra/usb/scripts/run-vm-qemu.sh infra/usb/dist/bursh-secure-usb-amd64.iso infra/usb/dist/bursh-data.img
-```
+1. ejetar o pendrive com segurança;
+2. inserir na máquina alvo;
+3. abrir menu de boot da BIOS/UEFI e selecionar o USB;
+4. aguardar login/desktop com kiosk automático.
 
-No boot da VM:
+### 5) Validação pós-boot no hardware real
 
-1. aguarde o kiosk abrir;
-2. vá para TTY2 (`Ctrl+Alt+F2`);
-3. execute:
-
-```bash
-sudo /usr/local/bin/smoke-test-bursh-live.sh
-```
-
-## Como testar em pendrive físico
-
-> **Atenção**: o comando abaixo apaga completamente o dispositivo alvo.
-
-1. identifique o device corretamente (`lsblk`), exemplo `/dev/sdX`;
-2. grave a ISO:
-
-```bash
-sudo dd if=infra/usb/dist/bursh-secure-usb-amd64.iso of=/dev/sdX bs=4M status=progress conv=fsync,notrunc
-```
-
-3. remova e reconecte o pendrive, faça boot por ele;
-4. no sistema live bootado, rode o smoke test:
+No sistema live bootado, executar:
 
 ```bash
 sudo /usr/local/bin/smoke-test-bursh-live.sh
+sudo /usr/local/bin/collect-bursh-boot-evidence.sh
 ```
 
-## Checklist mínimo de validação no boot
+## Checklist objetivo de hardware real
+
+### PASS
+
+Considere **PASS** somente quando todos os itens abaixo forem verdadeiros:
 
 - kiosk abre automaticamente em fullscreen;
-- app responde em `127.0.0.1:4173`;
-- `bursh-storage-init.service`, `bursh-web.service` e `bursh-kiosk.service` ativos;
-- `/run/bursh-sensitive` presente (RAM);
-- sem `BURSH-DATA`: modo efêmero;
-- com `BURSH-DATA`: somente `watch-only` e `config` persistem via bind mount.
+- app local responde em `http://127.0.0.1:4173`;
+- `bursh-storage-init.service` ativo;
+- `bursh-web.service` ativo;
+- `bursh-kiosk.service` ativo;
+- `/run/bursh-sensitive` existe;
+- sem `BURSH-DATA`: modo efêmero OK;
+- com `BURSH-DATA`: mount em `/mnt/bursh-data` e bind mounts de `/var/lib/bursh/watch-only` e `/var/lib/bursh/config` ativos.
 
-## Política de dados aplicada
+### FAIL
 
-Nunca persistir:
+Considere **FAIL** se ocorrer qualquer um dos pontos:
 
-- mnemonic/seed/passphrase;
-- chave privada/xprv/WIF;
-- payload sensível bruto.
+- kiosk não inicia automaticamente;
+- app local indisponível em `127.0.0.1:4173`;
+- qualquer serviço BURSH essencial inativo;
+- diretório sensível em RAM ausente (`/run/bursh-sensitive`);
+- comportamento de persistência fora da política (ex.: `BURSH-DATA` presente sem bind mounts esperados).
 
-Pode persistir (somente se não sensível):
+## Coleta de evidência mínima (pós-boot)
 
-- estado watch-only;
-- preferências locais de UI/operação;
-- checkpoints sem material secreto.
+Script: `/usr/local/bin/collect-bursh-boot-evidence.sh`
+
+Sem argumentos (default):
+
+- salva em `/mnt/bursh-data` quando montado e gravável;
+- fallback para `/tmp` quando `BURSH-DATA` não está disponível.
+
+Com diretório explícito:
+
+```bash
+sudo /usr/local/bin/collect-bursh-boot-evidence.sh /tmp
+```
+
+Artefatos gerados:
+
+- `services-summary.txt` (status dos serviços BURSH);
+- `systemctl-status-*.txt` (status detalhado por serviço);
+- `journal-*.txt` e `journal-boot*.txt` (logs relevantes de boot e serviços);
+- `mount.txt`, `findmnt*.txt`, `lsblk-f.txt` (estado de mounts/discos, incluindo `BURSH-DATA`);
+- `smoke-test.txt` (saída do smoke test);
+- arquivo compactado `.tar.gz` pronto para anexar em evidência.
+
+## Dependências mínimas no host
+
+- `live-build` para gerar ISO;
+- `qemu-system-x86_64` para validação VM;
+- `parted` + `e2fsprogs` (`mkfs.ext4`) para preparação opcional de `BURSH-DATA`.
+
+## Fora de escopo desta entrega
+
+- signing real;
+- backend;
+- Android;
+- novas features web;
+- hardening avançado de release (fica para próximo passo após hardware).

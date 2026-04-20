@@ -1,37 +1,34 @@
 # Roadmap
 
-Roadmap prático para evoluir o produto após estabilização técnica inicial.
+Roadmap prático para evoluir a Secure USB Edition sem expandir escopo.
 
-## Fase atual — Fechar trilha de validação/boot da Secure USB Edition
+## Fase atual — operação real em hardware (depois da VM automatizada)
 
-Referência de execução: `docs/web-functional-checklist.md`.
+Referências operacionais: `README.md` e `infra/usb/README.md`.
 
-### P0 — Obrigatório agora (Secure USB)
+### P0 — Obrigatório agora (Secure USB em pendrive/hardware)
 
-- gerar ISO live local de forma reproduzível;
-- validar boot em VM (QEMU) com smoke test pós-boot;
-- validar gravação/boot por pendrive físico com o mesmo smoke test;
-- registrar evidência objetiva de autostart kiosk/app e política de persistência não sensível.
+- executar fluxo curto e reproduzível: ISO -> `validate-vm-boot.sh` -> `prepare-physical-usb.sh` -> boot físico;
+- aplicar checklist objetivo de PASS/FAIL em hardware real;
+- coletar evidência mínima pós-boot com `collect-bursh-boot-evidence.sh`;
+- consolidar artefatos para cada execução de hardware (logs + mounts + status de serviços).
 
-### P1 — Consolidação imediata após P0
+### P1 — Próximo passo após hardware validado (hardening / release readiness)
 
-- ampliar checklist de hardware real (UEFI/BIOS, GPU, Wi‑Fi/Bluetooth desativado quando aplicável);
-- aplicar hardening incremental na imagem live (defaults mais restritivos, redução de superfície e trilha de auditoria);
-- formalizar critérios de aceite para versão bootável “funcional de verdade”.
+- hardening incremental da live image (defaults mais restritivos e redução de superfície);
+- definir critérios formais de aceite para release Secure USB;
+- executar matriz mínima de compatibilidade de hardware (UEFI/BIOS e perfis de máquina).
 
-### P2 — Retomar evolução de produto (após trilha USB estabilizada)
+### P2 — Release readiness ampliado (sem abrir feature nova)
 
-- integração real com assinador externo em cenário reproduzível;
-- critérios de release de segurança e funcionalidade para uso controlado;
-- evolução adicional de UX web somente com base em lacunas comprovadas em validação real.
-
-### P3 — Expansão de plataforma (após gate funcional)
-
-- Android;
-- Secure USB para release de produção (assinatura de imagem, cadeia de confiança e operação guiada).
+- trilha de evidência contínua para auditoria de boot/runtime;
+- baseline de operação repetível para versão candidata a release;
+- revisão final de documentação operacional para handoff externo.
 
 ## Itens explicitamente fora da etapa atual
 
-- novas features grandes fora do escopo de validação funcional;
-- refactors amplos sem ganho direto de validação/clareza;
-- redesign amplo de arquitetura antes de consolidar boot/teste real da Secure USB.
+- signing real;
+- backend;
+- Android;
+- novas funcionalidades web;
+- refactor amplo de arquitetura sem impacto direto em validação/hardening.
