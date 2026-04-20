@@ -505,3 +505,14 @@ Alertas operacionais obrigatórios:
 - seed/passphrase não devem ser digitadas em dispositivos online;
 - manter operação em ambiente offline/amnésico;
 - não usar USB/rede para transportar seed, passphrase, xpub ou PSBT entre zonas.
+
+## Status operacional mais recente (2026-04-20, UTC)
+
+Rodada executada no ambiente atual:
+
+- `pnpm usb:check-host` detectou ausências de `lb`, `qemu-system-x86_64`, `qrencode`, `zbarimg` e `zbarcam`;
+- `pnpm usb:build-iso` falhou por falta de `live-build` (`lb`);
+- `pnpm usb:qr:generate` (`--type xpub`) falhou por falta de `qrencode`;
+- `./infra/usb/scripts/summarize-hardware-validation.sh` gerou `NO-GO` com 0 execuções e gaps em `HW-UEFI-01`, `HW-UEFI-02` e `HW-ALT-01`.
+
+Próximo passo obrigatório: repetir a campanha em host funcional com todas as dependências instaladas antes de considerar tag/release.

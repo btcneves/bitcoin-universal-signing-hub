@@ -10,12 +10,14 @@ Este guia é uma nota rápida para preparar um host funcional capaz de executar 
   - `qemu-system-x86_64` para validação em VM.
   - `gnupg` para assinatura/verificação.
   - `coreutils` para `sha256sum`.
+  - `qrencode` para geração de QR de handoff (`xpub`/`psbt`).
+  - `zbarimg` e `zbarcam` para leitura/validação de QR.
 
 Instalação rápida:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y live-build qemu-system-x86 gnupg coreutils
+sudo apt-get install -y live-build qemu-system-x86 gnupg coreutils qrencode zbar-tools
 ```
 
 ## Pré-checagem automatizada
@@ -72,6 +74,18 @@ pnpm usb:summary
 ```
 
 Somente seguir para release taggeada quando o consolidado estiver em **GO**.
+
+7. Validar handoffs QR no host/VM antes da rodada física:
+
+```bash
+pnpm usb:qr:generate -- --type xpub --payload "xpub..." --out /tmp/xpub.png
+pnpm usb:qr:scan -- --image /tmp/xpub.png --expect xpub
+
+pnpm usb:qr:generate -- --type psbt --payload "cHNid..." --out /tmp/psbt.png
+pnpm usb:qr:scan -- --image /tmp/psbt.png --expect psbt
+```
+
+Sem `qrencode`/`zbarimg`/`zbarcam`, registrar `BLOCKED` para handoff QR e não avançar para gate final.
 
 ## Troubleshooting (ambiente bloqueado)
 

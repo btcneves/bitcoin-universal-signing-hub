@@ -141,3 +141,19 @@ Segurança operacional reforçada:
 - seeds/passphrases não devem ser digitadas em dispositivos online;
 - o fluxo deve ocorrer em ambiente offline/amnésico;
 - material sensível deve permanecer em RAM e ser limpo após erro/falha.
+
+## 7) Estado consolidado mais recente (2026-04-20, UTC)
+
+Última rodada no ambiente atual:
+
+- `pnpm usb:check-host`: `MISS lb`, `MISS qemu-system-x86_64`, `MISS qrencode`, `MISS zbarimg`, `MISS zbarcam`;
+- `pnpm usb:build-iso`: bloqueado por ausência de `live-build` (`lb`);
+- `pnpm usb:qr:generate` (`xpub`): bloqueado por ausência de `qrencode`;
+- `summarize-hardware-validation.sh`: **NO-GO** com 0 execuções e cobertura pendente de `HW-UEFI-01`, `HW-UEFI-02`, `HW-ALT-01`.
+
+Ação mínima para nova rodada:
+
+1. instalar dependências de build/VM/QR no host funcional;
+2. repetir `usb:check-host` e confirmar `OK` total;
+3. executar build + handoffs QR + validações físicas por cenário;
+4. reconsolidar e exigir `GO` antes de tag/release.
