@@ -210,3 +210,18 @@ Escopo objetivo desta entrega:
 ## 7) Critério para avanço de fase
 
 A expansão da próxima fase de produto avança com evidência reproduzível incremental da validação funcional web, com foco explícito nas lacunas restantes após as rodadas manuais parciais 1, 2 e 3.
+
+## 8) Atualização de utilidade real offline (2026-04-20)
+
+Entregas consolidadas nesta rodada:
+
+- `OfflineSeedVerificationService` expandido para:
+  - derivação multi-moeda (bitcoin/litecoin/dogecoin);
+  - entrada manual ou via envelope QR para seed/passphrase;
+  - comparação de passphrase por consistência de xpub com/sem passphrase;
+  - geração de endereços para validação de seed por endereço conhecido.
+- `psbt-engine` com assinatura a partir de payload QR (`ur:crypto-psbt/...`) e retorno direto em QR assinada.
+- scripts USB QR reforçados com tipagem (`--type`) e validação de expectativa (`--expect`).
+- UI inicial (`HomeActions`) com cards explícitos para verificação BIP39, geração de xpub QR e assinatura PSBT por QR offline.
+
+Decisão mantida: escopo continua restrito à Secure USB Edition offline-first (sem backend/Android).

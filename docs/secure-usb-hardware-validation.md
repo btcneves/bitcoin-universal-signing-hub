@@ -104,3 +104,13 @@ Modo alternativo (sem escrever arquivo):
 ```bash
 ./infra/usb/scripts/summarize-hardware-validation.sh --stdout-only
 ```
+
+## 5) Complemento de validação mínima do fluxo QR offline
+
+Adicionar ao registro da rodada física:
+
+1. gerar QR de xpub (`--type xpub`) e escanear com `--expect xpub`;
+2. gerar QR de PSBT (`--type psbt`) e escanear com `--expect psbt`;
+3. confirmar que não houve transferência por rede/pendrive para payloads sensíveis.
+
+Critério: os dois handoffs QR precisam ser `PASS` para declarar fluxo air-gapped funcional na rodada.

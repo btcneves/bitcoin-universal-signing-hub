@@ -119,15 +119,44 @@ export type SeedVerificationResult = {
   knownAddressChecked?: string;
 };
 
-const COIN_DERIVATION: Record<SupportedSeedCoin, { coinType: number; bech32?: string }> = {
-  bitcoin: { coinType: 0, bech32: 'bc' },
-  litecoin: { coinType: 2, bech32: 'ltc' },
-  dogecoin: { coinType: 3 }
+export type MultiCoinSeedVerificationResult = {
+  bitcoin: SeedVerificationResult;
+  litecoin: SeedVerificationResult;
+  dogecoin: SeedVerificationResult;
+};
+
+export type PassphraseConsistencyResult = {
+  derivationPath: string;
+  xpubWithoutPassphrase: string;
+  xpubWithPassphrase: string;
+  matchesWithoutPassphrase: boolean;
+};
+
+const getDefaultDerivationPath = (coin: SupportedSeedCoin): string => {
+  switch (coin) {
+    case 'bitcoin':
+      return "m/84'/0'/0'";
+    case 'litecoin':
+      return "m/84'/2'/0'";
+    case 'dogecoin':
+      return "m/44'/3'/0'";
+    default:
+      return "m/84'/0'/0'";
+  }
 };
 
 const clampAddressCount = (count?: number): number => {
   if (!Number.isInteger(count) || !count) return 5;
   return Math.min(Math.max(count, 1), 20);
+};
+
+const fromQrOrRaw = (payload: string): string => {
+  const trimmed = payload.trim();
+  if (trimmed.startsWith('ur:crypto-seed/')) return trimmed.slice('ur:crypto-seed/'.length).trim();
+  if (trimmed.startsWith('ur:crypto-passphrase/')) {
+    return trimmed.slice('ur:crypto-passphrase/'.length).trim();
+  }
+  return trimmed;
 };
 
 export class OfflineSeedVerificationService {
@@ -185,7 +214,7 @@ export class OfflineSeedVerificationService {
 
   verifySeed(request: SeedVerificationRequest): SeedVerificationResult {
     const coin = request.coin ?? 'bitcoin';
-    const defaultPath = `m/84'/${COIN_DERIVATION[coin].coinType}'/0'`;
+    const defaultPath = getDefaultDerivationPath(coin);
     const derivationPath = request.derivationPath?.trim() || defaultPath;
     const addressCount = clampAddressCount(request.addressCount);
 
@@ -220,6 +249,58 @@ export class OfflineSeedVerificationService {
     }
   }
 
+  verifyAllCoins(request: Omit<SeedVerificationRequest, 'coin'>): MultiCoinSeedVerificationResult {
+    return {
+      bitcoin: this.verifySeed({ ...request, coin: 'bitcoin' }),
+      litecoin: this.verifySeed({ ...request, coin: 'litecoin' }),
+      dogecoin: this.verifySeed({ ...request, coin: 'dogecoin' })
+    };
+  }
+
+  verifySeedFromInput(
+    request: Omit<SeedVerificationRequest, 'mnemonic' | 'passphrase'> & {
+      mnemonicInput: string;
+      passphraseInput?: string;
+    }
+  ): SeedVerificationResult {
+    const mnemonic = fromQrOrRaw(request.mnemonicInput);
+    const passphrase = request.passphraseInput ? fromQrOrRaw(request.passphraseInput) : undefined;
+
+    return this.verifySeed({
+      ...request,
+      mnemonic,
+      ...(passphrase !== undefined ? { passphrase } : {})
+    });
+  }
+
+  evaluatePassphraseConsistency(
+    mnemonic: string,
+    passphrase: string,
+    derivationPath = "m/84'/0'/0'"
+  ): PassphraseConsistencyResult {
+    const withoutPassphrase = this.verifySeed({
+      mnemonic,
+      passphrase: '',
+      derivationPath,
+      coin: 'bitcoin',
+      addressCount: 1
+    });
+    const withPassphrase = this.verifySeed({
+      mnemonic,
+      passphrase,
+      derivationPath,
+      coin: 'bitcoin',
+      addressCount: 1
+    });
+
+    return {
+      derivationPath,
+      xpubWithoutPassphrase: withoutPassphrase.accountXpub,
+      xpubWithPassphrase: withPassphrase.accountXpub,
+      matchesWithoutPassphrase: withoutPassphrase.accountXpub === withPassphrase.accountXpub
+    };
+  }
+
   confirmPassphraseByXpub(
     mnemonic: string,
     passphrase: string,
@@ -240,3 +321,14 @@ export class OfflineSeedVerificationService {
 export const encodeXpubForQr = (xpub: string): string => `ur:crypto-hdkey/${xpub.trim()}`;
 export const decodeXpubFromQr = (payload: string): string =>
   payload.startsWith('ur:crypto-hdkey/') ? payload.slice('ur:crypto-hdkey/'.length) : payload;
+
+export const encodeSeedForQr = (mnemonic: string): string => `ur:crypto-seed/${mnemonic.trim()}`;
+export const decodeSeedFromQr = (payload: string): string =>
+  payload.startsWith('ur:crypto-seed/') ? payload.slice('ur:crypto-seed/'.length) : payload;
+
+export const encodePassphraseForQr = (passphrase: string): string =>
+  `ur:crypto-passphrase/${passphrase.trim()}`;
+export const decodePassphraseFromQr = (payload: string): string =>
+  payload.startsWith('ur:crypto-passphrase/')
+    ? payload.slice('ur:crypto-passphrase/'.length)
+    : payload;

@@ -35,3 +35,9 @@ Referências operacionais: `README.md` e `infra/usb/README.md`.
 - backend;
 - Android;
 - refactor amplo de arquitetura sem impacto direto em validação/hardening.
+
+### P1 adicional — robustez do fluxo QR
+
+- cobrir variações de `ur:crypto-seed`, `ur:crypto-passphrase`, `ur:crypto-hdkey` e `ur:crypto-psbt` em testes;
+- validar dependências QR (`qrencode`, `zbarimg`, `zbarcam`) em host + VM + hardware;
+- expandir casos de falha (QR com prefixo incorreto, payload truncado, passphrase inconsistente).

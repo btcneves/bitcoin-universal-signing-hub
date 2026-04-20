@@ -450,3 +450,27 @@ Após assinatura offline, gerar QR da PSBT assinada:
 - não salvar seed/passphrase em arquivos, histórico shell ou partição persistente;
 - não copiar PSBT/xpub por pendrive entre ambientes;
 - chaves privadas permanecem somente no dispositivo offline.
+
+## Fluxo air-gapped por QR (xpub + PSBT)
+
+A trilha Secure USB agora inclui handoff explícito por QR para watch-only:
+
+- **xpub para watch-only:** `ur:crypto-hdkey/...`
+- **PSBT para assinatura offline:** `ur:crypto-psbt/...`
+- **Seed/passphrase por QR opcional (entrada local):** `ur:crypto-seed/...` e `ur:crypto-passphrase/...`
+
+Exemplos:
+
+```bash
+pnpm usb:qr:generate -- --type xpub --payload "xpub..." --out /tmp/watch-only-xpub.png
+pnpm usb:qr:scan -- --image /tmp/watch-only-xpub.png --expect xpub
+
+pnpm usb:qr:generate -- --type psbt --payload "cHNid..." --out /tmp/unsigned-psbt.png
+pnpm usb:qr:scan -- --camera --expect psbt
+```
+
+Dependências recomendadas no host/VM para o fluxo QR:
+
+- `qrencode` (geração);
+- `zbarimg` (leitura por imagem);
+- `zbarcam` (leitura por câmera).

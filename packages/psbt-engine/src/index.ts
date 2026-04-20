@@ -3,8 +3,16 @@ import { Bip39Service } from '@bursh/bitcoin-engine';
 import { Psbt } from 'bitcoinjs-lib';
 import type { ExternalSignerAdapter, PsbtService } from '@bursh/core-domain';
 
+const decodeMaybeUrPsbt = (payload: string): string => {
+  const trimmed = payload.trim();
+  if (trimmed.startsWith('ur:crypto-psbt/')) {
+    return trimmed.slice('ur:crypto-psbt/'.length).trim();
+  }
+  return trimmed;
+};
+
 const decodePsbt = (input: string): Psbt => {
-  const trimmed = input.trim();
+  const trimmed = decodeMaybeUrPsbt(input);
   try {
     if (/^[0-9a-fA-F]+$/.test(trimmed)) {
       return Psbt.fromHex(trimmed);
@@ -105,6 +113,19 @@ export class DefaultPsbtService implements PsbtService {
         'PSBT não pôde ser finalizada: assinaturas/final scripts ausentes ou inválidos'
       );
     }
+  }
+
+  signPsbtFromQrWithMnemonic(
+    psbtQrPayload: string,
+    mnemonic: string,
+    passphrase = '',
+    options?: { finalize?: boolean }
+  ): { signedPsbtQr: string; signedPsbtBase64: string; txHex?: string } {
+    const signed = this.signPsbtWithMnemonic(psbtQrPayload, mnemonic, passphrase, options);
+    return {
+      ...signed,
+      signedPsbtQr: encodePsbtForQr(signed.signedPsbtBase64)
+    };
   }
 
   signPsbtWithMnemonic(

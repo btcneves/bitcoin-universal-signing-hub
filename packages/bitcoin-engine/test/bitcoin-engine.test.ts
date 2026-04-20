@@ -3,7 +3,11 @@ import {
   Bip39Service,
   Bip84WalletService,
   OfflineSeedVerificationService,
+  decodePassphraseFromQr,
+  decodeSeedFromQr,
   decodeXpubFromQr,
+  encodePassphraseForQr,
+  encodeSeedForQr,
   encodeXpubForQr
 } from '../src/index';
 
@@ -65,6 +69,41 @@ describe('offline seed verification service', () => {
     expect(result.accountSlip132?.startsWith('zpub')).toBe(true);
     expect(result.addresses).toHaveLength(2);
     expect(result.knownAddressMatched).toBe(false);
+  });
+
+  it('suporta entrada via QR para seed/passphrase e derivação multi-moeda', () => {
+    const svc = new OfflineSeedVerificationService();
+
+    const byQr = svc.verifySeedFromInput({
+      mnemonicInput: encodeSeedForQr(mnemonic),
+      passphraseInput: encodePassphraseForQr('TREZOR'),
+      coin: 'bitcoin',
+      derivationPath: "m/84'/0'/0'",
+      addressCount: 1
+    });
+    expect(byQr.accountXpub.startsWith('xpub')).toBe(true);
+
+    const multi = svc.verifyAllCoins({
+      mnemonic,
+      passphrase: 'TREZOR',
+      addressCount: 1
+    });
+    expect(multi.bitcoin.addresses[0]?.startsWith('bc1')).toBe(true);
+    expect(multi.litecoin.addresses[0]?.startsWith('ltc1')).toBe(true);
+    expect(multi.dogecoin.addresses[0]?.startsWith('D')).toBe(true);
+
+    expect(decodeSeedFromQr(encodeSeedForQr(mnemonic))).toBe(mnemonic);
+    expect(decodePassphraseFromQr(encodePassphraseForQr('TREZOR'))).toBe('TREZOR');
+  });
+
+  it('avalia consistência de passphrase comparando xpub com/sem passphrase', () => {
+    const svc = new OfflineSeedVerificationService();
+    const empty = svc.evaluatePassphraseConsistency(mnemonic, '');
+    expect(empty.matchesWithoutPassphrase).toBe(true);
+
+    const nonEmpty = svc.evaluatePassphraseConsistency(mnemonic, 'TREZOR');
+    expect(nonEmpty.matchesWithoutPassphrase).toBe(false);
+    expect(nonEmpty.xpubWithPassphrase).not.toBe(nonEmpty.xpubWithoutPassphrase);
   });
 
   it('confirma passphrase por equivalência de xpub e suporta QR envelope de xpub', () => {
