@@ -5,9 +5,30 @@ Requires=bursh-storage-init.service
 
 [Service]
 Type=simple
+User=bursh
+Group=bursh
+WorkingDirectory=/opt/bursh/web-dist
 ExecStart=/usr/local/bin/start-bursh-web-server.sh
 Restart=always
 RestartSec=2
+NoNewPrivileges=yes
+UMask=0077
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectControlGroups=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectClock=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+IPAddressDeny=any
+IPAddressAllow=127.0.0.1
+IPAddressAllow=::1
+ReadOnlyPaths=/opt/bursh/web-dist
 
 [Install]
 WantedBy=multi-user.target

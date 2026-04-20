@@ -8,8 +8,9 @@ Atualizado em: **2026-04-20**.
 - **Concluído até 2026-04-20 (estado anterior)**: fluxo padronizado para pendrive físico (`prepare-physical-usb.sh`) e coleta mínima de evidência pós-boot em hardware (`collect-bursh-boot-evidence.sh`).
 - **Concluído nesta entrega**: camada mínima profissional de aceite real com checklist formal `PASS/FAIL/BLOCKED`, matriz mínima obrigatória, template de evidência e script de inicialização de registro (`init-hardware-validation-record.sh`).
 - **Concluído nesta entrega (incremental)**: consolidação operacional das rodadas físicas com `infra/usb/scripts/summarize-hardware-validation.sh` + campo explícito de cenário da matriz no registro (`--scenario-id`).
-- **Estado atual**: lacuna VM -> hardware virou gate agregável e verificável (`GO`/`NO-GO`) a partir de execuções reais.
-- **Foco imediato**: executar rodadas físicas obrigatórias e usar `summary.md` como fonte objetiva de aceite mínimo para início do hardening.
+- **Concluído nesta entrega (hardening inicial)**: primeira camada mínima de release hardening aplicada no runtime Secure USB (kiosk mais restritivo, `bursh-web.service` com sandbox systemd e persistência opcional com bind mounts endurecidos).
+- **Estado atual**: fundação funcional + hardening mínimo ativo para início de fase final de release controlada.
+- **Foco imediato**: rodar validação pós-hardening em VM/hardware e consolidar evidências sem regressão no gate `GO`/`NO-GO`.
 - **Regra ativa**: sem abrir escopo para features web, signing real, backend ou Android nesta fase.
 
 ## 1) Estado funcional atual do produto web (`apps/web`)
@@ -101,7 +102,7 @@ Atualizado em: **2026-04-20**.
 - autostart via systemd: init de storage policy -> servidor local -> kiosk fullscreen;
 - política operacional de persistência: partição opcional `BURSH-DATA` somente para não sensíveis, sessão sensível em RAM.
 
-## 2.2) Fechamento de trilha prática Secure USB (entrega 2026-04-20)
+## 2.2) Fechamento de trilha prática Secure USB + hardening inicial (entrega 2026-04-20)
 
 ### Entrega principal escolhida
 
@@ -116,6 +117,13 @@ Atualizado em: **2026-04-20**.
   - estado de mounts/discos (`findmnt`, `mount`, `lsblk -f`), incluindo `BURSH-DATA`;
   - saída do smoke test em arquivo dedicado;
 - alinhamento da documentação principal com quick start operacional e critérios de PASS/FAIL em hardware real.
+
+### Hardening mínimo aplicado agora (sem expansão de escopo)
+
+- bind mounts de persistência opcional (`watch-only/config`) remount com `nosuid,nodev,noexec`;
+- script de init de storage com `umask 077` para evitar permissões amplas por default;
+- kiosk Chromium com bloqueio de networking/background/update components em runtime;
+- serviço local web com sandbox `systemd` (usuário não-root, `ProtectSystem=strict`, `NoNewPrivileges` e IP restrito a loopback).
 
 ### O que já pode ser testado de verdade
 

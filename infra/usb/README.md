@@ -7,7 +7,26 @@ Objetivo desta fase: fechar a lacuna entre validação em VM e uso real em pendr
 - ISO gerada de forma reproduzível (`live-build`);
 - validação automatizada em VM já disponível com saída PASS/FAIL e artefatos;
 - evidência de boot em ambiente virtual já existe;
-- foco agora: execução real em pendrive + hardware físico.
+- fluxo pendrive físico + hardware real operacional;
+- **hardening mínimo inicial aplicado** (defaults mais restritivos no runtime live/kiosk).
+
+## Hardening mínimo aplicado nesta fase
+
+Escopo deliberadamente pequeno e de alto impacto, sem abrir cadeia de produto nova:
+
+1. **Persistência opcional com bind mounts endurecidos**
+   - partição `BURSH-DATA` continua opcional;
+   - bind mounts de `watch-only` e `config` agora são remontados com `nosuid,nodev,noexec`;
+   - criação de diretórios com `umask 077` para reduzir exposição por permissão ampla.
+
+2. **Kiosk Chromium mais restritivo por default**
+   - desativa componentes de networking/background e update em runtime (`--disable-background-networking`, `--disable-component-update`, etc.);
+   - mantém uso dedicado offline-first em `127.0.0.1:4173`.
+
+3. **Servidor web local com sandbox `systemd`**
+   - roda como usuário não privilegiado (`bursh`);
+   - `ProtectSystem=strict`, `NoNewPrivileges=yes`, isolamento adicional de namespaces/suid;
+   - rede restrita a loopback (`IPAddressDeny=any` + allow explícito para `127.0.0.1` e `::1`).
 
 ## Fluxo único recomendado (ISO -> VM -> pendrive -> hardware)
 
@@ -168,3 +187,14 @@ O comando gera `infra/usb/dist/hardware-validation/summary.md` com:
 - Android;
 - novas features web;
 - hardening avançado de release (fica para próximo passo após hardware).
+
+## Checklist curto pós-hardening
+
+Rodar após boot (VM e hardware), antes de anexar evidência final:
+
+- `systemctl status bursh-storage-init.service --no-pager` (ativo);
+- `systemctl status bursh-web.service --no-pager` (ativo, usuário `bursh`);
+- `systemctl status bursh-kiosk.service --no-pager` (ativo);
+- `curl -I http://127.0.0.1:4173` (resposta HTTP local);
+- `findmnt -no OPTIONS /var/lib/bursh/watch-only` e `/var/lib/bursh/config` (quando `BURSH-DATA` existir, confirmar `nosuid,nodev,noexec`);
+- `sudo /usr/local/bin/smoke-test-bursh-live.sh` (PASS).
