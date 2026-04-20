@@ -14,6 +14,7 @@
     "install:ci": "pnpm install --frozen-lockfile=false",
     "validate:ci": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "usb:prepare-web": "bash infra/usb/scripts/prepare-web-bundle.sh",
+    "usb:check-host": "bash infra/usb/scripts/check-host-requirements.sh",
     "usb:build-iso": "bash infra/usb/scripts/build-iso.sh",
     "usb:vm": "bash infra/usb/scripts/run-vm-qemu.sh",
     "usb:summary": "bash infra/usb/scripts/summarize-hardware-validation.sh",
